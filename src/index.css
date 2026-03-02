@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --table-felt-1: #081326;
+  --table-felt-2: #11203d;
+  --table-line: #223150;
+  --panel-bg: rgba(7, 16, 32, 0.72);
+  --panel-border: rgba(111, 132, 176, 0.26);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 5%, rgba(102, 126, 234, 0.18), transparent 35%),
+    radial-gradient(circle at 88% 18%, rgba(34, 197, 94, 0.1), transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.025) 0,
+      rgba(255, 255, 255, 0.025) 1px,
+      transparent 1px,
+      transparent 16px
+    ),
+    linear-gradient(180deg, var(--table-felt-2) 0%, var(--table-felt-1) 100%);
+  color: #f9fafb;
+  font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.game-surface {
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  box-shadow: 0 24px 40px rgba(2, 6, 23, 0.42);
+  backdrop-filter: blur(8px);
+}
+
+.game-title {
+  font-family: "Fraunces", Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+.cah-card {
+  position: relative;
+  border-radius: 17px;
+  padding: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: 5 / 7;
+  min-height: 10.6rem;
+  border: 1px solid transparent;
+  overflow: hidden;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, filter 140ms ease;
+}
+
+.cah-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 17px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.cah-card-text {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cah-card-footer {
+  margin-top: 0.7rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+.cah-black-card {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.09), transparent 42%),
+    linear-gradient(180deg, #101828 0%, #040507 100%);
+  border-color: #30384d;
+  color: #f9fafb;
+  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.44);
+}
+
+.cah-white-card {
+  background:
+    radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.7), transparent 35%),
+    linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  border-color: #aeb9c8;
+  color: #0f172a;
+  box-shadow: 0 14px 25px rgba(15, 23, 42, 0.24);
+}
+
+.cah-white-card-compact {
+  padding: 0.75rem;
+  min-height: 9.1rem;
+}
+
+.cah-card-sm {
+  min-height: 8.6rem;
+}
+
+.cah-card-lg {
+  min-height: 13.4rem;
+}
+
+.cah-card-wide {
+  aspect-ratio: auto;
+  min-height: 0;
+  padding: 1rem 1.1rem;
+}
+
+.cah-card-prompt {
+  width: clamp(10.5rem, 22vw, 13.5rem);
+}

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+spacetimedb/node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+spacetimedb/dist/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Env files (keep sample files)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+
+# Spacetime local runtime/config artifacts
+.spacetime/
+spacetimedb/.spacetime/
