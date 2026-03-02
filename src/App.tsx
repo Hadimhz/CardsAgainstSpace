@@ -142,7 +142,7 @@ function App({ cardData }: AppProps) {
         ) : null}
 
         {modal === 'admin' ? (
-          <AdminPanel conn={conn} blackLookup={cardData.black} onClose={() => setModal('none')} />
+          <AdminPanel conn={conn} onClose={() => setModal('none')} />
         ) : null}
       </>
     );

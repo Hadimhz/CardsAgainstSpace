@@ -15,7 +15,6 @@ type ImportedPack = {
 
 type AdminPanelProps = {
   conn: DbConnection | null;
-  blackLookup: Record<number, { text: string; pick: number }>;
   onClose: () => void;
 };
 
@@ -51,32 +50,24 @@ function parseBlanks(value: unknown): number | null {
   return n;
 }
 
-function parsePrompt(
-  prompt: unknown,
-  blackLookup: Record<number, { text: string; pick: number }>
-): ImportedPrompt | null {
+function parsePrompt(prompt: unknown): ImportedPrompt | null {
   if (typeof prompt === 'number' || typeof prompt === 'string') {
     const id = parseU32(prompt);
     if (id == null) return null;
-    const inferred = parseBlanks(blackLookup[id]?.pick) ?? 1;
-    return { id, picks: inferred };
+    return { id, picks: 1 };
   }
 
   if (!prompt || typeof prompt !== 'object') return null;
 
   const row = prompt as Record<string, unknown>;
   const id = parseU32(row.id);
-  const lookupPick = id == null ? null : parseBlanks(blackLookup[id]?.pick);
-  const picks = parseBlanks(row.picks ?? row.pick ?? row.blanks) ?? lookupPick;
+  const picks = parseBlanks(row.picks ?? row.pick);
   if (id == null || picks == null) return null;
 
   return { id, picks };
 }
 
-function normalizePack(
-  value: unknown,
-  blackLookup: Record<number, { text: string; pick: number }>
-): ImportedPack | null {
+function normalizePack(value: unknown): ImportedPack | null {
   if (!value || typeof value !== 'object') return null;
   const row = value as Record<string, unknown>;
   if (typeof row.name !== 'string' || !Array.isArray(row.white_cards) || !Array.isArray(row.black_cards)) {
@@ -84,9 +75,7 @@ function normalizePack(
   }
 
   const white_cards = row.white_cards.map(parseU32).filter((n): n is number => n != null);
-  const black_cards = row.black_cards
-    .map(prompt => parsePrompt(prompt, blackLookup))
-    .filter((p): p is ImportedPrompt => p != null);
+  const black_cards = row.black_cards.map(parsePrompt).filter((p): p is ImportedPrompt => p != null);
 
   return {
     name: row.name.trim() || 'Unnamed Pack',
@@ -95,7 +84,7 @@ function normalizePack(
   };
 }
 
-function AdminPanel({ conn, blackLookup, onClose }: AdminPanelProps) {
+function AdminPanel({ conn, onClose }: AdminPanelProps) {
   const [packs, setPacks] = useState<ImportedPack[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -123,7 +112,7 @@ function AdminPanel({ conn, blackLookup, onClose }: AdminPanelProps) {
           : [];
 
       const packList = rawPacks
-        .map(value => normalizePack(value, blackLookup))
+        .map(normalizePack)
         .filter((pack): pack is ImportedPack => pack != null);
 
       if (packList.length === 0) {
