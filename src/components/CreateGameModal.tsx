@@ -72,7 +72,13 @@ function CreateGameModal({ packs, conn, onClose }: CreateGameModalProps) {
 
     setIsSubmitting(true);
     try {
-      const gameId = Uuid.parse(crypto.randomUUID());
+      const bytes = crypto.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const uuidStr = [...bytes]
+        .map((b, i) => ([4, 6, 8, 10].includes(i) ? '-' : '') + b.toString(16).padStart(2, '0'))
+        .join('');
+      const gameId = Uuid.parse(uuidStr);
       await conn.reducers.createGame({
         gameId,
         displayName: trimmedName,

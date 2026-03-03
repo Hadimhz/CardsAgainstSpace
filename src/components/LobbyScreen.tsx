@@ -29,12 +29,27 @@ function LobbyScreen({
   const isOwner = game.owner.toHexString() === myIdentity.toHexString();
   const canStart = players.length >= 2 && packRows.length > 0;
 
-  const handleCopyCode = async () => {
-    await navigator.clipboard.writeText(game.gameId.toString());
+  const copyToClipboard = (text: string) => {
+    if (navigator.clipboard) {
+      void navigator.clipboard.writeText(text);
+    } else {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
   };
 
-  const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(`${window.location.origin}?game=${game.gameId.toString()}`);
+  const handleCopyCode = () => {
+    copyToClipboard(game.gameId.toString());
+  };
+
+  const handleCopyLink = () => {
+    copyToClipboard(`${window.location.origin}?game=${game.gameId.toString()}`);
   };
 
   const handleLeaveGame = async () => {
@@ -120,18 +135,14 @@ function LobbyScreen({
                 <button
                   type="button"
                   className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-700/80"
-                  onClick={() => {
-                    void handleCopyCode();
-                  }}
+                  onClick={handleCopyCode}
                 >
                   Copy Code
                 </button>
                 <button
                   type="button"
                   className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-700/80"
-                  onClick={() => {
-                    void handleCopyLink();
-                  }}
+                  onClick={handleCopyLink}
                 >
                   Copy Link
                 </button>
