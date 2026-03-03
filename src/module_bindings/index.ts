@@ -36,11 +36,13 @@ import {
 // Import all reducer arg schemas
 import AddAnswerCardReducer from "./add_answer_card_reducer";
 import AddPackToGameReducer from "./add_pack_to_game_reducer";
+import AddPacksToGameReducer from "./add_packs_to_game_reducer";
 import AddPromptCardReducer from "./add_prompt_card_reducer";
 import ClearAllGameDataReducer from "./clear_all_game_data_reducer";
 import CreateGameReducer from "./create_game_reducer";
 import CreatePackReducer from "./create_pack_reducer";
 import ForceRevealReducer from "./force_reveal_reducer";
+import ImportAllPacksReducer from "./import_all_packs_reducer";
 import ImportPackReducer from "./import_pack_reducer";
 import JoinGameReducer from "./join_game_reducer";
 import LeaveGameReducer from "./leave_game_reducer";
@@ -266,11 +268,13 @@ const tablesSchema = __schema({
 const reducersSchema = __reducers(
   __reducerSchema("add_answer_card", AddAnswerCardReducer),
   __reducerSchema("add_pack_to_game", AddPackToGameReducer),
+  __reducerSchema("add_packs_to_game", AddPacksToGameReducer),
   __reducerSchema("add_prompt_card", AddPromptCardReducer),
   __reducerSchema("clear_all_game_data", ClearAllGameDataReducer),
   __reducerSchema("create_game", CreateGameReducer),
   __reducerSchema("create_pack", CreatePackReducer),
   __reducerSchema("force_reveal", ForceRevealReducer),
+  __reducerSchema("import_all_packs", ImportAllPacksReducer),
   __reducerSchema("import_pack", ImportPackReducer),
   __reducerSchema("join_game", JoinGameReducer),
   __reducerSchema("leave_game", LeaveGameReducer),

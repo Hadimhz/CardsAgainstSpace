@@ -18,6 +18,13 @@ const ImportedAnswerCard = t.object("ImportedAnswerCard", {
   card_ref: t.u32(),
 });
 
+const ImportedPackEntry = t.object("ImportedPackEntry", {
+  pack_id: t.uuid(),
+  name: t.string(),
+  prompt_cards: t.array(ImportedPromptCard),
+  answer_cards: t.array(ImportedAnswerCard),
+});
+
 // ---------------------------------------------------------------------------
 // Helpers — ctx typed as any so btree index access isn't checked by tsc
 // ---------------------------------------------------------------------------
@@ -227,6 +234,32 @@ export const import_pack = spacetimedb.reducer(
   }
 );
 
+export const import_all_packs = spacetimedb.reducer(
+  { packs: t.array(ImportedPackEntry) },
+  (ctx, { packs }) => {
+    const db = ctx.db as any;
+    for (const pack of packs) {
+      if (!pack.name.trim()) throw new SenderError("pack name is required");
+      db.packs.insert({ pack_id: pack.pack_id, name: pack.name });
+      for (const prompt of pack.prompt_cards) {
+        db.prompt_cards.insert({
+          prompt_id: prompt.prompt_id,
+          pack_id: pack.pack_id,
+          card_ref: prompt.card_ref,
+          blanks: prompt.blanks,
+        });
+      }
+      for (const answer of pack.answer_cards) {
+        db.answer_cards.insert({
+          answer_id: answer.answer_id,
+          pack_id: pack.pack_id,
+          card_ref: answer.card_ref,
+        });
+      }
+    }
+  }
+);
+
 export const sync_prompt_blanks = spacetimedb.reducer(
   { entries: t.array(SyncBlanksEntry) },
   (ctx, { entries }) => {
@@ -360,6 +393,35 @@ export const add_pack_to_game = spacetimedb.reducer(
       added_by: ctx.sender,
       added_at: ctx.timestamp,
     });
+  }
+);
+
+export const add_packs_to_game = spacetimedb.reducer(
+  { game_id: t.uuid(), pack_ids: t.array(t.uuid()) },
+  (ctx, { game_id, pack_ids }) => {
+    const db = ctx.db as any;
+    const game = db.games.game_id.find(game_id);
+    if (!game) throw new SenderError("game not found");
+    if (game.owner.toHexString() !== ctx.sender.toHexString())
+      throw new SenderError("only the owner can manage packs");
+    if (game.phase !== "Lobby") throw new SenderError("game is not in Lobby phase");
+
+    const existing = new Set(
+      [...db.game_packs.gamepacks_by_game.filter(game_id)].map((r: any) => r.pack_id.toString())
+    );
+
+    for (const pack_id of pack_ids) {
+      if (!db.packs.pack_id.find(pack_id)) throw new SenderError(`pack not found: ${pack_id}`);
+      if (existing.has(pack_id.toString())) continue;
+      db.game_packs.insert({
+        id: 0n,
+        game_id,
+        pack_id,
+        added_by: ctx.sender,
+        added_at: ctx.timestamp,
+      });
+      existing.add(pack_id.toString());
+    }
   }
 );
 

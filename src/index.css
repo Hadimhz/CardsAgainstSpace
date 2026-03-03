@@ -77,11 +77,11 @@ body {
 
 .cah-card-footer {
   margin-top: 0.7rem;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.78;
+  opacity: 0.55;
 }
 
 .cah-black-card {
@@ -123,4 +123,14 @@ body {
 
 .cah-card-prompt {
   width: clamp(10.5rem, 22vw, 13.5rem);
+}
+
+.cah-glow-blue {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.7), 0 0 20px 6px rgba(99, 102, 241, 0.35);
+}
+
+.cah-glow-gold {
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.7), 0 0 22px 6px rgba(251, 191, 36, 0.3);
 }

@@ -10,7 +10,6 @@ import HomeScreen from './components/HomeScreen';
 import JoinGameModal from './components/JoinGameModal';
 import LobbyScreen from './components/LobbyScreen';
 import RevealScreen from './components/RevealScreen';
-import RoundEndScreen from './components/RoundEndScreen';
 import SubmitScreen from './components/SubmitScreen';
 
 type AppProps = {
@@ -104,6 +103,17 @@ function App({ cardData }: AppProps) {
     return map;
   }, [answerCards]);
 
+  const packMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const pack of packs) map.set(pack.packId.toString(), pack.name);
+    return map;
+  }, [packs]);
+
+  const promptPackName = useMemo(() => {
+    if (!promptCard) return 'Prompt Card';
+    return packMap.get(promptCard.packId.toString()) ?? 'Prompt Card';
+  }, [promptCard, packMap]);
+
   const myHand = useMemo(() => {
     if (!myGame || !myIdentity) return [];
 
@@ -117,12 +127,14 @@ function App({ cardData }: AppProps) {
       .map(row => {
         const answer = answerCardMap.get(row.answerId.toString());
         const text = answer ? cardData.white[answer.cardRef]?.text ?? '???' : '???';
+        const packName = answer ? packMap.get(answer.packId.toString()) ?? 'Response Card' : 'Response Card';
         return {
           answerId: row.answerId,
           text,
+          packName,
         };
       });
-  }, [myGame, myIdentity, handCards, answerCardMap, cardData.white]);
+  }, [myGame, myIdentity, handCards, answerCardMap, packMap, cardData.white]);
 
   const nonCzarCount = useMemo(() => {
     if (!myGame) return 0;
@@ -203,6 +215,7 @@ function App({ cardData }: AppProps) {
         game={myGame}
         myIdentity={myIdentity}
         promptText={promptText}
+        promptPackName={promptPackName}
         blanks={promptBlanks}
         myHand={myHand}
         hasSubmitted={!!mySubmission}
@@ -221,7 +234,9 @@ function App({ cardData }: AppProps) {
         game={myGame}
         myIdentity={myIdentity}
         promptText={promptText}
+        promptPackName={promptPackName}
         whiteLookup={cardData.white}
+        packMap={packMap}
         submissions={roundSubmissions}
         submissionCards={submissionCards}
         answerCards={answerCards}
@@ -233,18 +248,26 @@ function App({ cardData }: AppProps) {
   }
 
   if (myGame.phase === 'RoundEnd') {
+    const canAdvance =
+      myGame.owner.toHexString() === myIdentity.toHexString() ||
+      myGame.czar.toHexString() === myIdentity.toHexString();
     return renderWithHostCancel(
-      <RoundEndScreen
+      <RevealScreen
         game={myGame}
-        gamePlayers={playersInGame}
+        myIdentity={myIdentity}
+        promptText={promptText}
+        promptPackName={promptPackName}
+        whiteLookup={cardData.white}
+        packMap={packMap}
         submissions={roundSubmissions}
         submissionCards={submissionCards}
         answerCards={answerCards}
+        gamePlayers={playersInGame}
         scores={scores}
-        promptText={promptText}
-        whiteLookup={cardData.white}
-        myIdentity={myIdentity}
         conn={conn}
+        showNames
+        canAdvance={canAdvance}
+        onNextRound={async () => { await conn?.reducers.nextRound({ gameId: myGame.gameId }); }}
       />
     );
   }

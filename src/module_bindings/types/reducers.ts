@@ -8,11 +8,13 @@ import { type Infer as __Infer } from "spacetimedb";
 // Import all reducer arg schemas
 import AddAnswerCardReducer from "../add_answer_card_reducer";
 import AddPackToGameReducer from "../add_pack_to_game_reducer";
+import AddPacksToGameReducer from "../add_packs_to_game_reducer";
 import AddPromptCardReducer from "../add_prompt_card_reducer";
 import ClearAllGameDataReducer from "../clear_all_game_data_reducer";
 import CreateGameReducer from "../create_game_reducer";
 import CreatePackReducer from "../create_pack_reducer";
 import ForceRevealReducer from "../force_reveal_reducer";
+import ImportAllPacksReducer from "../import_all_packs_reducer";
 import ImportPackReducer from "../import_pack_reducer";
 import JoinGameReducer from "../join_game_reducer";
 import LeaveGameReducer from "../leave_game_reducer";
@@ -25,11 +27,13 @@ import SyncPromptBlanksReducer from "../sync_prompt_blanks_reducer";
 
 export type AddAnswerCardParams = __Infer<typeof AddAnswerCardReducer>;
 export type AddPackToGameParams = __Infer<typeof AddPackToGameReducer>;
+export type AddPacksToGameParams = __Infer<typeof AddPacksToGameReducer>;
 export type AddPromptCardParams = __Infer<typeof AddPromptCardReducer>;
 export type ClearAllGameDataParams = __Infer<typeof ClearAllGameDataReducer>;
 export type CreateGameParams = __Infer<typeof CreateGameReducer>;
 export type CreatePackParams = __Infer<typeof CreatePackReducer>;
 export type ForceRevealParams = __Infer<typeof ForceRevealReducer>;
+export type ImportAllPacksParams = __Infer<typeof ImportAllPacksReducer>;
 export type ImportPackParams = __Infer<typeof ImportPackReducer>;
 export type JoinGameParams = __Infer<typeof JoinGameReducer>;
 export type LeaveGameParams = __Infer<typeof LeaveGameReducer>;

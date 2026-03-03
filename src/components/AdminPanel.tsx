@@ -189,94 +189,27 @@ function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
     setIsImporting(true);
     setError(null);
     setWarning(null);
-
-    const importPack = (conn.reducers as any).importPack as
-      | ((args: {
-          packId: Uuid;
-          name: string;
-          promptCards: { promptId: Uuid; cardRef: number; blanks: number }[];
-          answerCards: { answerId: Uuid; cardRef: number }[];
-        }) => Promise<unknown>)
-      | undefined;
-    const useBulkImport = typeof importPack === 'function';
-
-    setTotal(packs.length);
+    setTotal(1);
     setDone(0);
-
-    let completed = 0;
+    setCurrentPack(`${packs.length} pack${packs.length === 1 ? '' : 's'}`);
 
     try {
-      for (const pack of packs) {
-        setCurrentPack(pack.name);
-        const packId = Uuid.parse(randomUuid());
+      const payload = packs.map(pack => ({
+        packId: Uuid.parse(randomUuid()),
+        name: pack.name,
+        promptCards: pack.black_cards.map(prompt => ({
+          promptId: Uuid.parse(randomUuid()),
+          cardRef: prompt.id,
+          blanks: cardData.black[prompt.id]?.pick ?? prompt.picks,
+        })),
+        answerCards: pack.white_cards.map(answer => ({
+          answerId: Uuid.parse(randomUuid()),
+          cardRef: answer,
+        })),
+      }));
 
-        if (useBulkImport) {
-          const promptCards = pack.black_cards.map(prompt => ({
-            promptId: Uuid.parse(randomUuid()),
-            cardRef: prompt.id,
-            blanks: cardData.black[prompt.id]?.pick ?? prompt.picks,
-          }));
-          const answerCards = pack.white_cards.map(answer => ({
-            answerId: Uuid.parse(randomUuid()),
-            cardRef: answer,
-          }));
-
-          try {
-            await importPack({
-              packId,
-              name: pack.name,
-              promptCards,
-              answerCards,
-            });
-          } catch (err) {
-            throw new Error(
-              `importPack failed for "${pack.name}": ${err instanceof Error ? err.message : 'unknown error'}`
-            );
-          }
-        } else {
-          try {
-            await conn.reducers.createPack({ packId, name: pack.name });
-          } catch (err) {
-            throw new Error(
-              `createPack failed for "${pack.name}": ${err instanceof Error ? err.message : 'unknown error'}`
-            );
-          }
-
-          for (let i = 0; i < pack.black_cards.length; i++) {
-            const prompt = pack.black_cards[i];
-            try {
-              await conn.reducers.addPromptCard({
-                promptId: Uuid.parse(randomUuid()),
-                packId,
-                cardRef: prompt.id,
-                blanks: cardData.black[prompt.id]?.pick ?? prompt.picks,
-              });
-            } catch (err) {
-              throw new Error(
-                `addPromptCard failed for "${pack.name}" (index ${i}): ${err instanceof Error ? err.message : 'unknown error'}`
-              );
-            }
-          }
-
-          for (let i = 0; i < pack.white_cards.length; i++) {
-            const answerId = pack.white_cards[i];
-            try {
-              await conn.reducers.addAnswerCard({
-                answerId: Uuid.parse(randomUuid()),
-                packId,
-                cardRef: answerId,
-              });
-            } catch (err) {
-              throw new Error(
-                `addAnswerCard failed for "${pack.name}" (index ${i}): ${err instanceof Error ? err.message : 'unknown error'}`
-              );
-            }
-          }
-        }
-
-        completed += 1;
-        setDone(completed);
-      }
+      await (conn.reducers as any).importAllPacks({ packs: payload });
+      setDone(1);
       setCurrentPack(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import failed');

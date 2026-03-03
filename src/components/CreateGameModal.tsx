@@ -86,10 +86,10 @@ function CreateGameModal({ packs, conn, onClose }: CreateGameModalProps) {
       });
 
       const selectedSet = new Set(selectedPackIds);
-      const chosenPacks = packList.filter(pack => selectedSet.has(pack.packId.toString()));
-      await Promise.all(
-        chosenPacks.map(pack => conn.reducers.addPackToGame({ gameId, packId: pack.packId }))
-      );
+      const packIds = packList
+        .filter(pack => selectedSet.has(pack.packId.toString()))
+        .map(pack => pack.packId);
+      await (conn.reducers as any).addPacksToGame({ gameId, packIds });
 
       onClose();
     } finally {

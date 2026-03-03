@@ -82,6 +82,18 @@ export const ImportedAnswerCard = __t.object("ImportedAnswerCard", {
 });
 export type ImportedAnswerCard = __Infer<typeof ImportedAnswerCard>;
 
+export const ImportedPackEntry = __t.object("ImportedPackEntry", {
+  packId: __t.uuid(),
+  name: __t.string(),
+  get promptCards() {
+    return __t.array(ImportedPromptCard);
+  },
+  get answerCards() {
+    return __t.array(ImportedAnswerCard);
+  },
+});
+export type ImportedPackEntry = __Infer<typeof ImportedPackEntry>;
+
 export const ImportedPromptCard = __t.object("ImportedPromptCard", {
   promptId: __t.uuid(),
   cardRef: __t.u32(),

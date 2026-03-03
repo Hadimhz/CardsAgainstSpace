@@ -6,12 +6,14 @@ import { GamePlayers, Games, Scores } from '../module_bindings/types';
 type HandCardView = {
   answerId: Uuid;
   text: string;
+  packName: string;
 };
 
 type SubmitScreenProps = {
   game: Games;
   myIdentity: Identity;
   promptText: string;
+  promptPackName: string;
   blanks: number;
   myHand: readonly HandCardView[];
   hasSubmitted: boolean;
@@ -36,6 +38,7 @@ function SubmitScreen({
   game,
   myIdentity,
   promptText,
+  promptPackName,
   blanks,
   myHand,
   hasSubmitted,
@@ -115,9 +118,24 @@ function SubmitScreen({
               <div className="mt-4 flex justify-center">
                 <article className="cah-card cah-black-card cah-card-prompt">
                   <p className="cah-card-text text-sm">{renderPrompt(promptText)}</p>
-                  <p className="cah-card-footer text-gray-300">Prompt Card</p>
+                  <p className="cah-card-footer text-gray-300">{promptPackName}</p>
                 </article>
               </div>
+              {!isCzar && !hasSubmitted && (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700/70 bg-slate-900/70 px-4 py-3">
+                  <p className="text-sm text-slate-300">
+                    Selected {selected.length}/{blanks}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={selected.length !== blanks || !conn}
+                    className="rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => { void submitSelection(); }}
+                  >
+                    Submit
+                  </button>
+                </div>
+              )}
             </div>
             <div className="rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4">
               <div className="flex items-center justify-between gap-2">
@@ -192,30 +210,15 @@ function SubmitScreen({
                     onClick={() => toggleCard(id)}
                     className={`cah-card cah-white-card cah-white-card-compact text-left ${
                       selectedCard
-                        ? 'border-indigo-500 ring-2 ring-indigo-400'
+                        ? 'cah-glow-blue'
                         : 'hover:-translate-y-1 hover:border-indigo-300'
                     }`}
                   >
                     <p className="cah-card-text font-medium">{card.text}</p>
-                    <p className="cah-card-footer text-slate-500">{selectedCard ? 'Selected' : 'Response Card'}</p>
+                    <p className="cah-card-footer text-slate-500">{selectedCard ? 'Selected' : card.packName}</p>
                   </button>
                 );
               })}
-            </div>
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700/70 bg-slate-900/70 px-4 py-3">
-              <p className="text-sm text-slate-300">
-                Selected {selected.length}/{blanks}
-              </p>
-              <button
-                type="button"
-                disabled={selected.length !== blanks || !conn}
-                className="rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() => {
-                  void submitSelection();
-                }}
-              >
-                Submit
-              </button>
             </div>
           </section>
         )}
