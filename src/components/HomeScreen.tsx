@@ -6,6 +6,8 @@ type HomeScreenProps = {
 };
 
 function HomeScreen({ connected, onCreateGame, onJoinGame, onOpenAdmin }: HomeScreenProps) {
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8">
       <section className="w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-900/80 p-8 shadow-2xl">
@@ -38,13 +40,15 @@ function HomeScreen({ connected, onCreateGame, onJoinGame, onOpenAdmin }: HomeSc
             />
             {connected ? 'Connected' : 'Disconnected'}
           </span>
-          <button
-            type="button"
-            className="text-gray-400 underline-offset-2 hover:text-gray-200 hover:underline"
-            onClick={onOpenAdmin}
-          >
-            Admin
-          </button>
+          {isLocalhost && (
+            <button
+              type="button"
+              className="text-gray-400 underline-offset-2 hover:text-gray-200 hover:underline"
+              onClick={onOpenAdmin}
+            >
+              Admin
+            </button>
+          )}
         </div>
       </section>
     </main>

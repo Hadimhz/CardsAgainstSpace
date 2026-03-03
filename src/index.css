@@ -122,7 +122,7 @@ body {
 }
 
 .cah-card-prompt {
-  width: clamp(10.5rem, 22vw, 13.5rem);
+  width: clamp(10.5rem, 18vw, 12rem);
 }
 
 .cah-glow-blue {

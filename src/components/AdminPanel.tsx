@@ -102,6 +102,7 @@ function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
   const [warning, setWarning] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isCancellingGames, setIsCancellingGames] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
@@ -180,6 +181,21 @@ function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
       setError(`Sync failed: ${err instanceof Error ? err.message : 'unknown error'}`);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const cancelAllGames = async () => {
+    if (!conn) return;
+    const confirmed = window.confirm('Cancel ALL active games? This cannot be undone.');
+    if (!confirmed) return;
+    setIsCancellingGames(true);
+    setError(null);
+    try {
+      await (conn.reducers as any).clearAllGameData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel games');
+    } finally {
+      setIsCancellingGames(false);
     }
   };
 
@@ -300,6 +316,18 @@ function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
         </div>
 
         {syncResult ? <p className="mt-3 text-sm text-green-300">{syncResult}</p> : null}
+
+        <div className="mt-6 border-t border-gray-800 pt-5">
+          <p className="mb-3 text-xs uppercase tracking-widest text-gray-500">Danger Zone</p>
+          <button
+            type="button"
+            className="rounded-lg border border-red-700/80 bg-red-950/40 px-4 py-2 font-semibold text-red-200 hover:bg-red-900/50 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!conn || isCancellingGames || isImporting}
+            onClick={() => { void cancelAllGames(); }}
+          >
+            {isCancellingGames ? 'Cancelling...' : 'Cancel All Active Games'}
+          </button>
+        </div>
       </section>
     </div>
   );

@@ -104,11 +104,11 @@ function SubmitScreen({
   };
 
   return (
-    <main className="min-h-screen px-4 py-6">
+    <main className={`min-h-screen px-4 py-6${!isCzar && !hasSubmitted ? ' pb-28' : ''}`}>
       <div className="mx-auto w-full max-w-6xl space-y-5">
         <section className="game-surface rounded-3xl p-6">
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4">
+            <div className="order-2 rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4 lg:order-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Prompt</p>
                 <span className="rounded-full border border-indigo-300/30 bg-indigo-500/20 px-3 py-1 text-xs text-indigo-100">
@@ -121,23 +121,8 @@ function SubmitScreen({
                   <p className="cah-card-footer text-gray-300">{promptPackName}</p>
                 </article>
               </div>
-              {!isCzar && !hasSubmitted && (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700/70 bg-slate-900/70 px-4 py-3">
-                  <p className="text-sm text-slate-300">
-                    Selected {selected.length}/{blanks}
-                  </p>
-                  <button
-                    type="button"
-                    disabled={selected.length !== blanks || !conn}
-                    className="rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => { void submitSelection(); }}
-                  >
-                    Submit
-                  </button>
-                </div>
-              )}
             </div>
-            <div className="rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4">
+            <div className="order-1 rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4 lg:order-2">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="game-title text-xl text-white">Scores</h3>
                 <span className="text-xs uppercase tracking-[0.14em] text-slate-400">
@@ -195,11 +180,14 @@ function SubmitScreen({
           <section className="game-surface rounded-3xl p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="game-title text-2xl text-white">Your Hand</h3>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">
+                Swipe · Tap to select
+              </p>
+              <p className="hidden text-xs uppercase tracking-[0.18em] text-slate-400 md:block">
                 Tap cards to select
               </p>
             </div>
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-2 md:grid md:overflow-visible md:pb-0 md:gap-2.5 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
               {sortedHand.map(card => {
                 const id = card.answerId.toString();
                 const selectedCard = selected.includes(id);
@@ -208,12 +196,17 @@ function SubmitScreen({
                     key={id}
                     type="button"
                     onClick={() => toggleCard(id)}
-                    className={`cah-card cah-white-card cah-white-card-compact text-left ${
+                    className={`relative cah-card cah-white-card cah-white-card-compact text-left flex-none w-36 md:w-auto active:scale-95 ${
                       selectedCard
                         ? 'cah-glow-blue'
                         : 'hover:-translate-y-1 hover:border-indigo-300'
                     }`}
                   >
+                    {selectedCard && blanks > 1 && (
+                      <div className="absolute top-2 right-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-indigo-500 text-xs font-bold text-white">
+                        {selected.indexOf(id) + 1}
+                      </div>
+                    )}
                     <p className="cah-card-text font-medium">{card.text}</p>
                     <p className="cah-card-footer text-slate-500">{selectedCard ? 'Selected' : card.packName}</p>
                   </button>
@@ -223,6 +216,24 @@ function SubmitScreen({
           </section>
         )}
       </div>
+
+      {!isCzar && !hasSubmitted && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-slate-700/80 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+          <p className="text-sm text-slate-300">
+            {selected.length === blanks
+              ? 'Ready to submit!'
+              : `${blanks - selected.length} more card${blanks - selected.length === 1 ? '' : 's'} needed`}
+          </p>
+          <button
+            type="button"
+            disabled={selected.length !== blanks || !conn}
+            className="rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => { void submitSelection(); }}
+          >
+            Submit
+          </button>
+        </div>
+      )}
     </main>
   );
 }

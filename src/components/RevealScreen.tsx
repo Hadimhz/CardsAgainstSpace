@@ -130,7 +130,7 @@ function RevealScreen({
       <div className="mx-auto w-full max-w-6xl space-y-5">
         <section className="game-surface rounded-3xl p-6">
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4">
+            <div className="order-2 rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4 lg:order-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
                   {isRoundEnd ? 'Round over' : 'Reveal phase'}
@@ -168,7 +168,7 @@ function RevealScreen({
                 </p>
               )}
             </div>
-            <div className="rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4">
+            <div className="order-1 rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4 lg:order-2">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="game-title text-xl text-white">Scores</h3>
                 <span className="text-xs uppercase tracking-[0.14em] text-slate-400">
@@ -202,7 +202,13 @@ function RevealScreen({
           </div>
         </section>
 
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {!isRoundEnd && isCzar && (
+          <div className="flex items-center justify-center rounded-xl border border-indigo-400/30 bg-indigo-950/40 px-4 py-3 text-sm font-medium text-indigo-200">
+            Tap a submission to pick the winner
+          </div>
+        )}
+
+        <section className="flex gap-3 overflow-x-auto pb-2 md:grid md:overflow-visible md:pb-0 md:grid-cols-2 xl:grid-cols-3">
           {entries.map(entry => (
             <button
               key={entry.submissionId.toString()}
@@ -211,13 +217,13 @@ function RevealScreen({
               onClick={() => {
                 if (!isRoundEnd) void pickWinner(entry.submissionId.toString());
               }}
-              className={`game-surface rounded-2xl p-4 text-left transition ${
+              className={`flex-none w-44 md:w-auto game-surface rounded-2xl p-4 text-left transition ${
                 isRoundEnd
                   ? entry.isWinner
                     ? 'cursor-default cah-glow-gold'
-                    : 'cursor-default'
+                    : 'cursor-default opacity-60'
                   : isCzar
-                    ? 'hover:-translate-y-1 hover:border-indigo-400'
+                    ? 'hover:-translate-y-1 hover:border-indigo-400 active:scale-95 ring-1 ring-indigo-400/30 hover:ring-indigo-400'
                     : 'cursor-default'
               }`}
             >

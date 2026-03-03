@@ -115,7 +115,7 @@ function LobbyScreen({
 
           <button
             type="button"
-            className="mt-5 rounded-xl border border-red-700/80 bg-red-950/40 px-4 py-2 text-red-100 hover:bg-red-900/50"
+            className="mt-5 rounded-xl border border-red-700/80 bg-red-950/40 px-4 py-3 text-red-100 hover:bg-red-900/50"
             onClick={() => {
               void handleLeaveGame();
             }}
@@ -134,14 +134,14 @@ function LobbyScreen({
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-700/80"
+                  className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2.5 text-sm text-slate-100 hover:bg-slate-700/80"
                   onClick={handleCopyCode}
                 >
                   Copy Code
                 </button>
                 <button
                   type="button"
-                  className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-700/80"
+                  className="rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2.5 text-sm text-slate-100 hover:bg-slate-700/80"
                   onClick={handleCopyLink}
                 >
                   Copy Link
