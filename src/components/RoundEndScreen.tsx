@@ -48,21 +48,20 @@ function RoundEndScreen({
       });
   }, [winnerSubmission, submissionCards, answerCards, whiteLookup]);
 
+  const scoreMap = useMemo(() => {
+    const gameIdStr = game.gameId.toString();
+    const map = new Map<string, number>();
+    for (const s of scores) {
+      if (s.gameId.toString() === gameIdStr) map.set(s.player.toHexString(), s.points);
+    }
+    return map;
+  }, [scores, game.gameId]);
+
   const scoreboard = useMemo(() => {
     return gamePlayers
-      .map(player => {
-        const score = scores.find(
-          s =>
-            s.gameId.toString() === game.gameId.toString() &&
-            s.player.toHexString() === player.player.toHexString()
-        );
-        return {
-          player,
-          points: score?.points ?? 0,
-        };
-      })
+      .map(player => ({ player, points: scoreMap.get(player.player.toHexString()) ?? 0 }))
       .sort((a, b) => b.points - a.points);
-  }, [gamePlayers, scores, game.gameId]);
+  }, [gamePlayers, scoreMap]);
 
   const canAdvance =
     game.owner.toHexString() === myIdentity.toHexString() ||

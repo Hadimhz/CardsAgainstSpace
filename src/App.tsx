@@ -98,6 +98,12 @@ function App({ cardData }: AppProps) {
     );
   }, [roundSubmissions, myIdentity]);
 
+  const answerCardMap = useMemo(() => {
+    const map = new Map<string, typeof answerCards[number]>();
+    for (const card of answerCards) map.set(card.answerId.toString(), card);
+    return map;
+  }, [answerCards]);
+
   const myHand = useMemo(() => {
     if (!myGame || !myIdentity) return [];
 
@@ -109,14 +115,14 @@ function App({ cardData }: AppProps) {
       )
       .sort((a, b) => a.slot - b.slot)
       .map(row => {
-        const answer = answerCards.find(card => card.answerId.toString() === row.answerId.toString());
+        const answer = answerCardMap.get(row.answerId.toString());
         const text = answer ? cardData.white[answer.cardRef]?.text ?? '???' : '???';
         return {
           answerId: row.answerId,
           text,
         };
       });
-  }, [myGame, myIdentity, handCards, answerCards, cardData.white]);
+  }, [myGame, myIdentity, handCards, answerCardMap, cardData.white]);
 
   const nonCzarCount = useMemo(() => {
     if (!myGame) return 0;
@@ -142,7 +148,7 @@ function App({ cardData }: AppProps) {
         ) : null}
 
         {modal === 'admin' ? (
-          <AdminPanel conn={conn} onClose={() => setModal('none')} />
+          <AdminPanel conn={conn} cardData={cardData} onClose={() => setModal('none')} />
         ) : null}
       </>
     );

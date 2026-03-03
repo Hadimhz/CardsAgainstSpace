@@ -21,6 +21,7 @@ import PickWinnerReducer from "../pick_winner_reducer";
 import RemovePackFromGameReducer from "../remove_pack_from_game_reducer";
 import StartGameReducer from "../start_game_reducer";
 import SubmitCardsReducer from "../submit_cards_reducer";
+import SyncPromptBlanksReducer from "../sync_prompt_blanks_reducer";
 
 export type AddAnswerCardParams = __Infer<typeof AddAnswerCardReducer>;
 export type AddPackToGameParams = __Infer<typeof AddPackToGameReducer>;
@@ -37,4 +38,5 @@ export type PickWinnerParams = __Infer<typeof PickWinnerReducer>;
 export type RemovePackFromGameParams = __Infer<typeof RemovePackFromGameReducer>;
 export type StartGameParams = __Infer<typeof StartGameReducer>;
 export type SubmitCardsParams = __Infer<typeof SubmitCardsReducer>;
+export type SyncPromptBlanksParams = __Infer<typeof SyncPromptBlanksReducer>;
 

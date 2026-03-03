@@ -37,40 +37,54 @@ function RevealScreen({
 }: RevealScreenProps) {
   const isCzar = game.czar.toHexString() === myIdentity.toHexString();
 
+  const submissionCardMap = useMemo(() => {
+    const map = new Map<string, typeof submissionCards[number][]>();
+    for (const card of submissionCards) {
+      const key = card.submissionId.toString();
+      const list = map.get(key) ?? [];
+      list.push(card);
+      map.set(key, list);
+    }
+    return map;
+  }, [submissionCards]);
+
+  const answerCardMap = useMemo(() => {
+    const map = new Map<string, typeof answerCards[number]>();
+    for (const card of answerCards) map.set(card.answerId.toString(), card);
+    return map;
+  }, [answerCards]);
+
   const entries = useMemo(() => {
     return [...submissions]
       .sort((a, b) => a.revealOrder - b.revealOrder)
       .map(submission => {
-        const cards = submissionCards
-          .filter(card => card.submissionId.toString() === submission.submissionId.toString())
+        const cards = (submissionCardMap.get(submission.submissionId.toString()) ?? [])
           .sort((a, b) => a.slotIndex - b.slotIndex)
           .map(card => {
-            const row = answerCards.find(answer => answer.answerId.toString() === card.answerId.toString());
-            return row ? whiteLookup[row.cardRef]?.text : undefined;
-          })
-          .map(text => text ?? '???');
+            const row = answerCardMap.get(card.answerId.toString());
+            return row ? whiteLookup[row.cardRef]?.text ?? '???' : '???';
+          });
 
         return {
           submissionId: submission.submissionId,
           cards,
         };
       });
-  }, [submissions, submissionCards, answerCards]);
+  }, [submissions, submissionCardMap, answerCardMap, whiteLookup]);
+  const scoreMap = useMemo(() => {
+    const gameIdStr = game.gameId.toString();
+    const map = new Map<string, number>();
+    for (const s of scores) {
+      if (s.gameId.toString() === gameIdStr) map.set(s.player.toHexString(), s.points);
+    }
+    return map;
+  }, [scores, game.gameId]);
+
   const scoreboard = useMemo(() => {
     return gamePlayers
-      .map(player => {
-        const score = scores.find(
-          row =>
-            row.gameId.toString() === game.gameId.toString() &&
-            row.player.toHexString() === player.player.toHexString()
-        );
-        return {
-          player,
-          points: score?.points ?? 0,
-        };
-      })
+      .map(player => ({ player, points: scoreMap.get(player.player.toHexString()) ?? 0 }))
       .sort((a, b) => b.points - a.points);
-  }, [gamePlayers, scores, game.gameId]);
+  }, [gamePlayers, scoreMap]);
 
   const pickWinner = async (submissionId: string) => {
     if (!conn || !isCzar) return;

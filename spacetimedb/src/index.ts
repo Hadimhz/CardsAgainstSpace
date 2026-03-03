@@ -8,6 +8,11 @@ const ImportedPromptCard = t.object("ImportedPromptCard", {
   blanks: t.u8(),
 });
 
+const SyncBlanksEntry = t.object("SyncBlanksEntry", {
+  prompt_id: t.uuid(),
+  blanks: t.u8(),
+});
+
 const ImportedAnswerCard = t.object("ImportedAnswerCard", {
   answer_id: t.uuid(),
   card_ref: t.u32(),
@@ -80,9 +85,8 @@ function drawNextPrompt(ctx: any, game_id: any): any | undefined {
 }
 
 function advanceToReveal(ctx: any, game_id: any, round_no: number): void {
-  const allSubs = [...ctx.db.submissions.iter()].filter(
-    (s: any) =>
-      s.game_id.toString() === game_id.toString() && s.round_no === round_no
+  const allSubs = [...(ctx.db as any).submissions.subs_by_game.filter(game_id)].filter(
+    (s: any) => s.round_no === round_no
   );
   const seed = ctx.timestamp.microsSinceUnixEpoch;
   const shuffled = lcgShuffle(allSubs, seed);
@@ -153,15 +157,8 @@ export const add_prompt_card = spacetimedb.reducer(
   (ctx, { prompt_id, pack_id, card_ref, blanks }) => {
     try {
       const db = ctx.db as any;
-      const pack = [...db.packs.iter()].find(
-        (p: any) => p.pack_id.toString() === pack_id.toString()
-      );
-      if (!pack) throw new SenderError("pack not found");
-
-      const existingPrompt = [...db.prompt_cards.iter()].find(
-        (p: any) => p.prompt_id.toString() === prompt_id.toString()
-      );
-      if (existingPrompt) throw new SenderError("prompt card already exists");
+      if (!db.packs.pack_id.find(pack_id)) throw new SenderError("pack not found");
+      if (db.prompt_cards.prompt_id.find(prompt_id)) throw new SenderError("prompt card already exists");
 
       db.prompt_cards.insert({ prompt_id, pack_id, card_ref, blanks });
     } catch (err) {
@@ -178,15 +175,8 @@ export const add_answer_card = spacetimedb.reducer(
   (ctx, { answer_id, pack_id, card_ref }) => {
     try {
       const db = ctx.db as any;
-      const pack = [...db.packs.iter()].find(
-        (p: any) => p.pack_id.toString() === pack_id.toString()
-      );
-      if (!pack) throw new SenderError("pack not found");
-
-      const existingAnswer = [...db.answer_cards.iter()].find(
-        (a: any) => a.answer_id.toString() === answer_id.toString()
-      );
-      if (existingAnswer) throw new SenderError("answer card already exists");
+      if (!db.packs.pack_id.find(pack_id)) throw new SenderError("pack not found");
+      if (db.answer_cards.answer_id.find(answer_id)) throw new SenderError("answer card already exists");
 
       db.answer_cards.insert({ answer_id, pack_id, card_ref });
     } catch (err) {
@@ -233,6 +223,19 @@ export const import_pack = spacetimedb.reducer(
       throw new SenderError(
         `import_pack failed: ${err instanceof Error ? err.message : "unknown error"}`
       );
+    }
+  }
+);
+
+export const sync_prompt_blanks = spacetimedb.reducer(
+  { entries: t.array(SyncBlanksEntry) },
+  (ctx, { entries }) => {
+    const db = ctx.db as any;
+    for (const entry of entries) {
+      const existing = db.prompt_cards.prompt_id.find(entry.prompt_id);
+      if (!existing) continue;
+      if (existing.blanks === entry.blanks) continue;
+      db.prompt_cards.prompt_id.update({ ...existing, blanks: entry.blanks });
     }
   }
 );
@@ -483,9 +486,8 @@ export const submit_cards = spacetimedb.reducer(
     if (game.czar.toHexString() === ctx.sender.toHexString())
       throw new SenderError("the czar cannot submit cards");
 
-    const alreadySubmitted = [...db.submissions.iter()].find(
+    const alreadySubmitted = [...db.submissions.subs_by_game.filter(game_id)].find(
       (s: any) =>
-        s.game_id.toString() === game_id.toString() &&
         s.round_no === game.round_no &&
         s.player.toHexString() === ctx.sender.toHexString()
     );
@@ -547,9 +549,8 @@ export const submit_cards = spacetimedb.reducer(
       (p: any) => p.player.toHexString() !== game.czar.toHexString()
     ).length;
 
-    const roundSubs = [...db.submissions.iter()].filter(
-      (s: any) =>
-        s.game_id.toString() === game_id.toString() && s.round_no === game.round_no
+    const roundSubs = [...db.submissions.subs_by_game.filter(game_id)].filter(
+      (s: any) => s.round_no === game.round_no
     );
     if (roundSubs.length >= nonCzarCount) {
       advanceToReveal(ctx, game_id, game.round_no);

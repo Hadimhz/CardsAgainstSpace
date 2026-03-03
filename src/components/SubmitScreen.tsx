@@ -53,21 +53,20 @@ function SubmitScreen({
     () => [...myHand].sort((a, b) => a.text.localeCompare(b.text)),
     [myHand]
   );
+  const scoreMap = useMemo(() => {
+    const gameIdStr = game.gameId.toString();
+    const map = new Map<string, number>();
+    for (const s of scores) {
+      if (s.gameId.toString() === gameIdStr) map.set(s.player.toHexString(), s.points);
+    }
+    return map;
+  }, [scores, game.gameId]);
+
   const scoreboard = useMemo(() => {
     return gamePlayers
-      .map(player => {
-        const score = scores.find(
-          row =>
-            row.gameId.toString() === game.gameId.toString() &&
-            row.player.toHexString() === player.player.toHexString()
-        );
-        return {
-          player,
-          points: score?.points ?? 0,
-        };
-      })
+      .map(player => ({ player, points: scoreMap.get(player.player.toHexString()) ?? 0 }))
       .sort((a, b) => b.points - a.points);
-  }, [gamePlayers, scores, game.gameId]);
+  }, [gamePlayers, scoreMap]);
 
   const toggleCard = (answerId: string) => {
     setSelected(prev => {
@@ -85,9 +84,15 @@ function SubmitScreen({
     if (!conn || selected.length !== blanks || selected.length === 0) return;
 
     const [id0, id1, id2] = selected;
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const uuidStr = [...bytes]
+      .map((b, i) => ([4, 6, 8, 10].includes(i) ? '-' : '') + b.toString(16).padStart(2, '0'))
+      .join('');
     await conn.reducers.submitCards({
       gameId: game.gameId,
-      submissionId: Uuid.parse(crypto.randomUUID()),
+      submissionId: Uuid.parse(uuidStr),
       answerId0: Uuid.parse(id0),
       answerId1: id1 ? Uuid.parse(id1) : undefined,
       answerId2: id2 ? Uuid.parse(id2) : undefined,

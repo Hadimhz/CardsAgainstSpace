@@ -1,6 +1,17 @@
 import { ChangeEvent, useMemo, useState } from 'react';
 import { Uuid } from 'spacetimedb';
-import { DbConnection } from '../module_bindings';
+import { useTable } from 'spacetimedb/react';
+import { DbConnection, tables } from '../module_bindings';
+import type { CardData } from '../main';
+
+function randomUuid(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  return [...bytes]
+    .map((b, i) => ([4, 6, 8, 10].includes(i) ? '-' : '') + b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 type ImportedPrompt = {
   id: number;
@@ -15,6 +26,7 @@ type ImportedPack = {
 
 type AdminPanelProps = {
   conn: DbConnection | null;
+  cardData: CardData;
   onClose: () => void;
 };
 
@@ -84,14 +96,17 @@ function normalizePack(value: unknown): ImportedPack | null {
   };
 }
 
-function AdminPanel({ conn, onClose }: AdminPanelProps) {
+function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
   const [packs, setPacks] = useState<ImportedPack[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
   const [currentPack, setCurrentPack] = useState<string | null>(null);
+  const [existingPrompts] = useTable(tables.prompt_cards);
 
   const progress = useMemo(() => (total === 0 ? 0 : done / total), [done, total]);
 
@@ -139,6 +154,35 @@ function AdminPanel({ conn, onClose }: AdminPanelProps) {
     }
   };
 
+  const syncBlanks = async () => {
+    if (!conn || existingPrompts.length === 0) return;
+
+    setIsSyncing(true);
+    setSyncResult(null);
+    setError(null);
+
+    try {
+      const entries: { promptId: Uuid; blanks: number }[] = [];
+      for (const card of existingPrompts) {
+        const cdnPick = cardData.black[card.cardRef]?.pick ?? 1;
+        if (card.blanks !== cdnPick) {
+          entries.push({ promptId: card.promptId, blanks: cdnPick });
+        }
+      }
+
+      if (entries.length === 0) {
+        setSyncResult('All prompt cards already have correct blanks.');
+      } else {
+        await (conn.reducers as any).syncPromptBlanks({ entries });
+        setSyncResult(`Corrected blanks on ${entries.length} prompt card(s).`);
+      }
+    } catch (err) {
+      setError(`Sync failed: ${err instanceof Error ? err.message : 'unknown error'}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const importAll = async () => {
     if (!conn || packs.length === 0) return;
 
@@ -164,16 +208,16 @@ function AdminPanel({ conn, onClose }: AdminPanelProps) {
     try {
       for (const pack of packs) {
         setCurrentPack(pack.name);
-        const packId = Uuid.parse(crypto.randomUUID());
+        const packId = Uuid.parse(randomUuid());
 
         if (useBulkImport) {
           const promptCards = pack.black_cards.map(prompt => ({
-            promptId: Uuid.parse(crypto.randomUUID()),
+            promptId: Uuid.parse(randomUuid()),
             cardRef: prompt.id,
-            blanks: prompt.picks,
+            blanks: cardData.black[prompt.id]?.pick ?? prompt.picks,
           }));
           const answerCards = pack.white_cards.map(answer => ({
-            answerId: Uuid.parse(crypto.randomUUID()),
+            answerId: Uuid.parse(randomUuid()),
             cardRef: answer,
           }));
 
@@ -202,10 +246,10 @@ function AdminPanel({ conn, onClose }: AdminPanelProps) {
             const prompt = pack.black_cards[i];
             try {
               await conn.reducers.addPromptCard({
-                promptId: Uuid.parse(crypto.randomUUID()),
+                promptId: Uuid.parse(randomUuid()),
                 packId,
                 cardRef: prompt.id,
-                blanks: prompt.picks,
+                blanks: cardData.black[prompt.id]?.pick ?? prompt.picks,
               });
             } catch (err) {
               throw new Error(
@@ -218,7 +262,7 @@ function AdminPanel({ conn, onClose }: AdminPanelProps) {
             const answerId = pack.white_cards[i];
             try {
               await conn.reducers.addAnswerCard({
-                answerId: Uuid.parse(crypto.randomUUID()),
+                answerId: Uuid.parse(randomUuid()),
                 packId,
                 cardRef: answerId,
               });
@@ -299,7 +343,17 @@ function AdminPanel({ conn, onClose }: AdminPanelProps) {
         {warning ? <p className="mt-3 text-sm text-amber-300">{warning}</p> : null}
         {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            className="rounded-lg border border-amber-600 bg-amber-900/40 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-900/60 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!conn || existingPrompts.length === 0 || isSyncing || isImporting}
+            onClick={() => {
+              void syncBlanks();
+            }}
+          >
+            {isSyncing ? 'Syncing...' : 'Re-sync Blanks'}
+          </button>
           <button
             type="button"
             className="rounded-lg bg-indigo-500 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
@@ -311,6 +365,8 @@ function AdminPanel({ conn, onClose }: AdminPanelProps) {
             Import All
           </button>
         </div>
+
+        {syncResult ? <p className="mt-3 text-sm text-green-300">{syncResult}</p> : null}
       </section>
     </div>
   );

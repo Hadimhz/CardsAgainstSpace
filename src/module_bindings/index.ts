@@ -49,6 +49,7 @@ import PickWinnerReducer from "./pick_winner_reducer";
 import RemovePackFromGameReducer from "./remove_pack_from_game_reducer";
 import StartGameReducer from "./start_game_reducer";
 import SubmitCardsReducer from "./submit_cards_reducer";
+import SyncPromptBlanksReducer from "./sync_prompt_blanks_reducer";
 
 // Import all procedure arg schemas
 
@@ -278,6 +279,7 @@ const reducersSchema = __reducers(
   __reducerSchema("remove_pack_from_game", RemovePackFromGameReducer),
   __reducerSchema("start_game", StartGameReducer),
   __reducerSchema("submit_cards", SubmitCardsReducer),
+  __reducerSchema("sync_prompt_blanks", SyncPromptBlanksReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

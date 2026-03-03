@@ -140,3 +140,9 @@ export const Submissions = __t.object("Submissions", {
 });
 export type Submissions = __Infer<typeof Submissions>;
 
+export const SyncBlanksEntry = __t.object("SyncBlanksEntry", {
+  promptId: __t.uuid(),
+  blanks: __t.u8(),
+});
+export type SyncBlanksEntry = __Infer<typeof SyncBlanksEntry>;
+
