@@ -22,6 +22,7 @@ type ImportedPack = {
   name: string;
   white_cards: number[];
   black_cards: ImportedPrompt[];
+  source_id: number;
 };
 
 type AdminPanelProps = {
@@ -79,7 +80,7 @@ function parsePrompt(prompt: unknown): ImportedPrompt | null {
   return { id, picks };
 }
 
-function normalizePack(value: unknown): ImportedPack | null {
+function normalizePack(value: unknown, source_id: number): ImportedPack | null {
   if (!value || typeof value !== 'object') return null;
   const row = value as Record<string, unknown>;
   if (typeof row.name !== 'string' || !Array.isArray(row.white_cards) || !Array.isArray(row.black_cards)) {
@@ -93,6 +94,7 @@ function normalizePack(value: unknown): ImportedPack | null {
     name: row.name.trim() || 'Unnamed Pack',
     white_cards,
     black_cards,
+    source_id,
   };
 }
 
@@ -121,14 +123,16 @@ function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text) as unknown;
-      const rawPacks = Array.isArray(parsed)
-        ? parsed
+      const entries: Array<[number, unknown]> = Array.isArray(parsed)
+        ? parsed.map((v, i) => [i, v] as [number, unknown])
         : parsed && typeof parsed === 'object'
-          ? Object.values(parsed as Record<string, unknown>)
+          ? (Object.entries(parsed as Record<string, unknown>)
+              .map(([k, v]) => [parseInt(k, 10), v] as [number, unknown])
+              .filter(([k]) => Number.isFinite(k as number)))
           : [];
 
-      const packList = rawPacks
-        .map(normalizePack)
+      const packList = entries
+        .map(([sourceId, value]) => normalizePack(value, sourceId))
         .filter((pack): pack is ImportedPack => pack != null);
 
       if (packList.length === 0) {
@@ -140,7 +144,7 @@ function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
       const rawBlackCount = packList.reduce((sum, pack) => sum + pack.black_cards.length, 0);
       const rawWhiteCount = packList.reduce((sum, pack) => sum + pack.white_cards.length, 0);
 
-      if (rawPacks.length !== packList.length) {
+      if (entries.length !== packList.length) {
         setWarning(
           `Loaded ${packList.length} pack(s). Some entries were skipped because they were not valid pack objects.`
         );
@@ -213,6 +217,7 @@ function AdminPanel({ conn, cardData, onClose }: AdminPanelProps) {
       const payload = packs.map(pack => ({
         packId: Uuid.parse(randomUuid()),
         name: pack.name,
+        sourceId: pack.source_id,
         promptCards: pack.black_cards.map(prompt => ({
           promptId: Uuid.parse(randomUuid()),
           cardRef: prompt.id,

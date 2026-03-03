@@ -13,4 +13,5 @@ import {
 export default __t.row({
   packId: __t.uuid().primaryKey().name("pack_id"),
   name: __t.string(),
+  sourceId: __t.option(__t.i32()).name("source_id"),
 });

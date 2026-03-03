@@ -21,6 +21,7 @@ const ImportedAnswerCard = t.object("ImportedAnswerCard", {
 const ImportedPackEntry = t.object("ImportedPackEntry", {
   pack_id: t.uuid(),
   name: t.string(),
+  source_id: t.i32().optional(),
   prompt_cards: t.array(ImportedPromptCard),
   answer_cards: t.array(ImportedAnswerCard),
 });
@@ -199,15 +200,16 @@ export const import_pack = spacetimedb.reducer(
   {
     pack_id: t.uuid(),
     name: t.string(),
+    source_id: t.i32().optional(),
     prompt_cards: t.array(ImportedPromptCard),
     answer_cards: t.array(ImportedAnswerCard),
   },
-  (ctx, { pack_id, name, prompt_cards, answer_cards }) => {
+  (ctx, { pack_id, name, source_id, prompt_cards, answer_cards }) => {
     try {
       if (!name.trim()) throw new SenderError("name is required");
 
       const db = ctx.db as any;
-      db.packs.insert({ pack_id, name });
+      db.packs.insert({ pack_id, name, source_id });
 
       for (const prompt of prompt_cards) {
         db.prompt_cards.insert({
@@ -240,7 +242,7 @@ export const import_all_packs = spacetimedb.reducer(
     const db = ctx.db as any;
     for (const pack of packs) {
       if (!pack.name.trim()) throw new SenderError("pack name is required");
-      db.packs.insert({ pack_id: pack.pack_id, name: pack.name });
+      db.packs.insert({ pack_id: pack.pack_id, name: pack.name, source_id: pack.source_id });
       for (const prompt of pack.prompt_cards) {
         db.prompt_cards.insert({
           prompt_id: prompt.prompt_id,

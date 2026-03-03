@@ -1,7 +1,16 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Uuid } from 'spacetimedb';
 import { DbConnection } from '../module_bindings';
 import { Packs } from '../module_bindings/types';
+
+const PRESETS_CDN = 'https://i14l4xj2tv.ufs.sh/f/8u9oHbcik9SVtrLiJhBJBnbrMWVy9ZmxTf8XUvk2NgCth70K';
+
+type Preset = {
+  id: string;
+  name: string;
+  description: string;
+  packids: number[];
+};
 
 type CreateGameModalProps = {
   packs: readonly Packs[];
@@ -16,6 +25,19 @@ function CreateGameModal({ packs, conn, onClose }: CreateGameModalProps) {
   const [search, setSearch] = useState('');
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [presetsLoading, setPresetsLoading] = useState(true);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(PRESETS_CDN)
+      .then(res => (res.ok ? res.json() : Promise.reject()))
+      .then((data: Preset[]) => { if (!cancelled) setPresets(data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setPresetsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const packList = useMemo(() => [...packs].sort((a, b) => a.name.localeCompare(b.name)), [packs]);
   const visiblePacks = useMemo(() => {
@@ -28,13 +50,27 @@ function CreateGameModal({ packs, conn, onClose }: CreateGameModalProps) {
     });
   }, [packList, search, showSelectedOnly, selectedPackIds]);
 
+  const applyPreset = (preset: Preset) => {
+    const packIdSet = new Set(preset.packids);
+    const matchingIds = packList
+      .filter(pack => {
+        const sid = (pack as any).sourceId;
+        return sid != null && packIdSet.has(sid);
+      })
+      .map(pack => pack.packId.toString());
+    setSelectedPackIds(matchingIds);
+    setActivePresetId(preset.id);
+  };
+
   const togglePack = (packId: string) => {
+    setActivePresetId(null);
     setSelectedPackIds(prev =>
       prev.includes(packId) ? prev.filter(id => id !== packId) : [...prev, packId]
     );
   };
 
   const selectAllVisible = () => {
+    setActivePresetId(null);
     const visibleIds = visiblePacks.map(pack => pack.packId.toString());
     setSelectedPackIds(prev => {
       const next = new Set(prev);
@@ -44,15 +80,18 @@ function CreateGameModal({ packs, conn, onClose }: CreateGameModalProps) {
   };
 
   const clearVisible = () => {
+    setActivePresetId(null);
     const visibleIds = new Set(visiblePacks.map(pack => pack.packId.toString()));
     setSelectedPackIds(prev => prev.filter(id => !visibleIds.has(id)));
   };
 
   const selectAll = () => {
+    setActivePresetId(null);
     setSelectedPackIds(packList.map(pack => pack.packId.toString()));
   };
 
   const clearAll = () => {
+    setActivePresetId(null);
     setSelectedPackIds([]);
   };
 
@@ -131,6 +170,28 @@ function CreateGameModal({ packs, conn, onClose }: CreateGameModalProps) {
             <div className="rounded-lg border border-gray-800 bg-gray-900/50 px-3 py-2 text-sm text-gray-300">
               Selected packs: <span className="font-semibold text-white">{selectedPackIds.length}</span>
             </div>
+            {!presetsLoading && presets.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-gray-300">Quick presets</p>
+                <div className="mt-1.5 flex flex-col gap-1.5">
+                  {presets.map(preset => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyPreset(preset)}
+                      className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                        activePresetId === preset.id
+                          ? 'border-indigo-500 bg-indigo-900/40 text-indigo-100'
+                          : 'border-gray-700 bg-gray-900/50 text-gray-200 hover:border-gray-600 hover:bg-gray-800'
+                      }`}
+                    >
+                      <div className="font-medium">{preset.name}</div>
+                      <div className="mt-0.5 text-xs text-gray-400">{preset.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="flex min-h-0 flex-col rounded-xl border border-gray-800 bg-gray-950 p-3">

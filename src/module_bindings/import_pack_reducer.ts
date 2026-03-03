@@ -18,6 +18,7 @@ import {
 export default {
   packId: __t.uuid(),
   name: __t.string(),
+  sourceId: __t.option(__t.i32()),
   get promptCards() {
     return __t.array(ImportedPromptCard);
   },

@@ -8,6 +8,7 @@ const packs = table(
   {
     pack_id: t.uuid().primaryKey(),
     name: t.string(),
+    source_id: t.i32().optional(),
   }
 );
 
