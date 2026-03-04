@@ -11,7 +11,7 @@ if (typeof Promise.withResolvers === 'undefined') {
   };
 }
 
-import { StrictMode, useEffect, useMemo, useState } from 'react';
+import { StrictMode, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Identity } from 'spacetimedb';
 import { SpacetimeDBProvider } from 'spacetimedb/react';
@@ -38,6 +38,7 @@ function RootApp() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const subscribedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,14 +82,17 @@ function RootApp() {
         .onConnect((conn: DbConnection, identity: Identity, token: string) => {
           localStorage.setItem(TOKEN_KEY, token);
           setIsDisconnected(false);
-          setIsReady(false);
-          conn
-            .subscriptionBuilder()
-            .onApplied(() => {
-              setIsReady(true);
-              console.log('Subscribed to all tables');
-            })
-            .subscribeToAllTables();
+          if (!subscribedRef.current) {
+            subscribedRef.current = true;
+            setIsReady(false);
+            conn
+              .subscriptionBuilder()
+              .onApplied(() => setIsReady(true))
+              .subscribeToAllTables();
+          } else {
+            // Reconnect — existing subscription re-syncs automatically
+            setIsReady(true);
+          }
           console.log('Connected to SpacetimeDB with identity:', identity.toHexString());
         })
         .onDisconnect(() => {

@@ -177,7 +177,7 @@ function RevealScreen({
                 </div>
               ) : (
                 <p className="mt-2 text-sm text-slate-300">
-                  {isCzar ? 'Pick the best answer' : 'Card Czar is picking the winner...'}
+                  {isCzar ? 'Pick the best answer' : `Card Czar (${playerNameMap.get(game.czar.toHexString()) ?? 'Unknown'}) is picking the winner...`}
                 </p>
               )}
             </div>

@@ -100,6 +100,37 @@ function drawNextPrompt(ctx: any, game_id: any): any | undefined {
   return row.prompt_id;
 }
 
+function advanceToNextRound(ctx: any, game: any): void {
+  const db = ctx.db as any;
+  const game_id = game.game_id;
+
+  if (game.max_rounds > 0 && game.round_no >= game.max_rounds) {
+    db.games.game_id.update({ ...game, phase: "GameOver" });
+    return;
+  }
+
+  const players = [...db.game_players.players_by_game.filter(game_id)].sort(
+    (a: any, b: any) => a.seat - b.seat
+  );
+  const czarIdx = players.findIndex(
+    (p: any) => p.player.toHexString() === game.czar.toHexString()
+  );
+  const nextCzarIdx = czarIdx === -1 ? 0 : (czarIdx + 1) % players.length;
+  const nextCzar = players[nextCzarIdx];
+
+  for (const p of players) dealCardsToPlayer(ctx, game_id, p.player, 7);
+
+  const promptId = drawNextPrompt(ctx, game_id);
+  if (!promptId) {
+    db.games.game_id.update({ ...game, phase: "GameOver" });
+    return;
+  }
+
+  const newRoundNo = game.round_no + 1;
+  db.rounds.insert({ id: 0n, game_id, round_no: newRoundNo, prompt_id: promptId, czar: nextCzar.player, started_at: ctx.timestamp });
+  db.games.game_id.update({ ...game, phase: "Submit", round_no: newRoundNo, czar: nextCzar.player, deadline: ctx.timestamp });
+}
+
 function advanceToReveal(ctx: any, game_id: any, round_no: number): void {
   const allSubs = [...(ctx.db as any).submissions.subs_by_game.filter(game_id)].filter(
     (s: any) => s.round_no === round_no
@@ -481,6 +512,20 @@ export const kick_player = spacetimedb.reducer(
       (r: any) => r.player.toHexString() === player.toHexString()
     );
     if (scoreRow) db.scores.id.delete(scoreRow.id);
+
+    // If in Submit phase, check if all remaining non-czar players have now submitted
+    if (game.phase === "Submit") {
+      const remaining = [...db.game_players.players_by_game.filter(game_id)];
+      const nonCzarRemaining = remaining.filter(
+        (p: any) => p.player.toHexString() !== game.czar.toHexString()
+      );
+      const roundSubs = [...db.submissions.subs_by_game.filter(game_id)].filter(
+        (s: any) => s.round_no === game.round_no
+      );
+      if (nonCzarRemaining.length > 0 && roundSubs.length >= nonCzarRemaining.length) {
+        advanceToReveal(ctx, game_id, game.round_no);
+      }
+    }
   }
 );
 
@@ -682,14 +727,23 @@ export const force_reveal = spacetimedb.reducer(
     if (!game) throw new SenderError("game not found");
     if (game.phase !== "Submit") throw new SenderError("game is not in Submit phase");
 
-    const players = [...db.game_players.players_by_game.filter(game_id)];
-    if (!players.find((p: any) => p.player.toHexString() === ctx.sender.toHexString()))
-      throw new SenderError("you are not in this game");
+    const isOwner = game.owner.toHexString() === ctx.sender.toHexString();
+    if (!isOwner) {
+      const players = [...db.game_players.players_by_game.filter(game_id)];
+      if (!players.find((p: any) => p.player.toHexString() === ctx.sender.toHexString()))
+        throw new SenderError("you are not in this game");
+      if (ctx.timestamp.microsSinceUnixEpoch < game.deadline.microsSinceUnixEpoch)
+        throw new SenderError("deadline has not passed yet");
+    }
 
-    if (ctx.timestamp.microsSinceUnixEpoch < game.deadline.microsSinceUnixEpoch)
-      throw new SenderError("deadline has not passed yet");
-
-    advanceToReveal(ctx, game_id, game.round_no);
+    const roundSubs = [...db.submissions.subs_by_game.filter(game_id)].filter(
+      (s: any) => s.round_no === game.round_no
+    );
+    if (roundSubs.length === 0) {
+      advanceToNextRound(ctx, game);
+    } else {
+      advanceToReveal(ctx, game_id, game.round_no);
+    }
   }
 );
 
@@ -729,48 +783,7 @@ export const next_round = spacetimedb.reducer(
     if (!isOwner && !isCzar)
       throw new SenderError("only the owner or czar can advance to the next round");
 
-    if (game.max_rounds > 0 && game.round_no >= game.max_rounds) {
-      db.games.game_id.update({ ...game, phase: "GameOver" });
-      return;
-    }
-
-    const players = [...db.game_players.players_by_game.filter(game_id)].sort(
-      (a: any, b: any) => a.seat - b.seat
-    );
-
-    const czarIdx = players.findIndex(
-      (p: any) => p.player.toHexString() === game.czar.toHexString()
-    );
-    const nextCzarIdx = czarIdx === -1 ? 0 : (czarIdx + 1) % players.length;
-    const nextCzar = players[nextCzarIdx];
-
-    for (const p of players) {
-      dealCardsToPlayer(ctx, game_id, p.player, 7);
-    }
-
-    const promptId = drawNextPrompt(ctx, game_id);
-    if (!promptId) {
-      db.games.game_id.update({ ...game, phase: "GameOver" });
-      return;
-    }
-
-    const newRoundNo = game.round_no + 1;
-    db.rounds.insert({
-      id: 0n,
-      game_id,
-      round_no: newRoundNo,
-      prompt_id: promptId,
-      czar: nextCzar.player,
-      started_at: ctx.timestamp,
-    });
-
-    db.games.game_id.update({
-      ...game,
-      phase: "Submit",
-      round_no: newRoundNo,
-      czar: nextCzar.player,
-      deadline: ctx.timestamp,
-    });
+    advanceToNextRound(ctx, game);
   }
 );
 

@@ -197,6 +197,15 @@ function SubmitScreen({
                 style={{ width: `${nonCzarCount === 0 ? 0 : (submittedCount / nonCzarCount) * 100}%` }}
               />
             </div>
+            {isOwner && (
+              <button
+                type="button"
+                className="mt-4 rounded-lg border border-amber-600 bg-amber-950/70 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-900/80"
+                onClick={() => { void conn?.reducers.forceReveal({ gameId: game.gameId }); }}
+              >
+                Force Reveal
+              </button>
+            )}
           </section>
         ) : hasSubmitted ? (
           <section className="game-surface rounded-3xl p-6 text-center">
@@ -204,6 +213,15 @@ function SubmitScreen({
             <p className="mt-2 text-slate-300">
               {submittedCount} / {nonCzarCount} submitted
             </p>
+            {isOwner && (
+              <button
+                type="button"
+                className="mt-4 rounded-lg border border-amber-600 bg-amber-950/70 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-900/80"
+                onClick={() => { void conn?.reducers.forceReveal({ gameId: game.gameId }); }}
+              >
+                Force Reveal
+              </button>
+            )}
           </section>
         ) : (
           <section className="game-surface rounded-3xl p-5">
