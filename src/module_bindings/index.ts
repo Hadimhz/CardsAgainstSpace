@@ -49,6 +49,7 @@ import LeaveGameReducer from "./leave_game_reducer";
 import NextRoundReducer from "./next_round_reducer";
 import PickWinnerReducer from "./pick_winner_reducer";
 import RemovePackFromGameReducer from "./remove_pack_from_game_reducer";
+import ReturnToLobbyReducer from "./return_to_lobby_reducer";
 import StartGameReducer from "./start_game_reducer";
 import SubmitCardsReducer from "./submit_cards_reducer";
 import SyncPromptBlanksReducer from "./sync_prompt_blanks_reducer";
@@ -57,12 +58,10 @@ import SyncPromptBlanksReducer from "./sync_prompt_blanks_reducer";
 
 // Import all table schema definitions
 import AnswerCardsRow from "./answer_cards_table";
-import GameAnswerDeckRow from "./game_answer_deck_table";
 import GamePacksRow from "./game_packs_table";
 import GamePlayersRow from "./game_players_table";
-import GamePromptDeckRow from "./game_prompt_deck_table";
 import GamesRow from "./games_table";
-import HandCardsRow from "./hand_cards_table";
+import MyHandRow from "./my_hand_table";
 import PacksRow from "./packs_table";
 import PromptCardsRow from "./prompt_cards_table";
 import RoundsRow from "./rounds_table";
@@ -88,20 +87,6 @@ const tablesSchema = __schema({
       { name: 'answer_cards_answer_id_key', constraint: 'unique', columns: ['answerId'] },
     ],
   }, AnswerCardsRow),
-  game_answer_deck: __table({
-    name: 'game_answer_deck',
-    indexes: [
-      { name: 'answerdeck_by_game', algorithm: 'btree', columns: [
-        'gameId',
-      ] },
-      { name: 'id', algorithm: 'btree', columns: [
-        'id',
-      ] },
-    ],
-    constraints: [
-      { name: 'game_answer_deck_id_key', constraint: 'unique', columns: ['id'] },
-    ],
-  }, GameAnswerDeckRow),
   game_packs: __table({
     name: 'game_packs',
     indexes: [
@@ -133,20 +118,6 @@ const tablesSchema = __schema({
       { name: 'game_players_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, GamePlayersRow),
-  game_prompt_deck: __table({
-    name: 'game_prompt_deck',
-    indexes: [
-      { name: 'promptdeck_by_game', algorithm: 'btree', columns: [
-        'gameId',
-      ] },
-      { name: 'id', algorithm: 'btree', columns: [
-        'id',
-      ] },
-    ],
-    constraints: [
-      { name: 'game_prompt_deck_id_key', constraint: 'unique', columns: ['id'] },
-    ],
-  }, GamePromptDeckRow),
   games: __table({
     name: 'games',
     indexes: [
@@ -164,20 +135,6 @@ const tablesSchema = __schema({
       { name: 'games_game_id_key', constraint: 'unique', columns: ['gameId'] },
     ],
   }, GamesRow),
-  hand_cards: __table({
-    name: 'hand_cards',
-    indexes: [
-      { name: 'hand_by_game', algorithm: 'btree', columns: [
-        'gameId',
-      ] },
-      { name: 'id', algorithm: 'btree', columns: [
-        'id',
-      ] },
-    ],
-    constraints: [
-      { name: 'hand_cards_id_key', constraint: 'unique', columns: ['id'] },
-    ],
-  }, HandCardsRow),
   packs: __table({
     name: 'packs',
     indexes: [
@@ -262,6 +219,13 @@ const tablesSchema = __schema({
       { name: 'submissions_submission_id_key', constraint: 'unique', columns: ['submissionId'] },
     ],
   }, SubmissionsRow),
+  my_hand: __table({
+    name: 'my_hand',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyHandRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
@@ -281,6 +245,7 @@ const reducersSchema = __reducers(
   __reducerSchema("next_round", NextRoundReducer),
   __reducerSchema("pick_winner", PickWinnerReducer),
   __reducerSchema("remove_pack_from_game", RemovePackFromGameReducer),
+  __reducerSchema("return_to_lobby", ReturnToLobbyReducer),
   __reducerSchema("start_game", StartGameReducer),
   __reducerSchema("submit_cards", SubmitCardsReducer),
   __reducerSchema("sync_prompt_blanks", SyncPromptBlanksReducer),

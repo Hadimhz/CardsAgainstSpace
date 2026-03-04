@@ -102,6 +102,9 @@ export const ImportedPromptCard = __t.object("ImportedPromptCard", {
 });
 export type ImportedPromptCard = __Infer<typeof ImportedPromptCard>;
 
+export const MyHand = __t.object("MyHand", {});
+export type MyHand = __Infer<typeof MyHand>;
+
 export const Packs = __t.object("Packs", {
   packId: __t.uuid(),
   name: __t.string(),

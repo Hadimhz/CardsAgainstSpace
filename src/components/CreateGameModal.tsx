@@ -129,8 +129,7 @@ function CreateGameModal({ packs, conn, onClose }: CreateGameModalProps) {
         .filter(pack => selectedSet.has(pack.packId.toString()))
         .map(pack => pack.packId);
       await (conn.reducers as any).addPacksToGame({ gameId, packIds });
-
-      onClose();
+      // Don't close — App.tsx will unmount this modal once myGame is defined via subscription
     } finally {
       setIsSubmitting(false);
     }

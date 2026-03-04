@@ -104,7 +104,7 @@ function SubmitScreen({
   };
 
   return (
-    <main className={`min-h-screen px-4 py-6${!isCzar && !hasSubmitted ? ' pb-28' : ''}`}>
+    <main className={`min-h-screen px-4 py-6${!isCzar && !hasSubmitted ? ' pb-28 md:pb-6' : ''}`}>
       <div className="mx-auto w-full max-w-6xl space-y-5">
         <section className="game-surface rounded-3xl p-6">
           <div className="grid gap-4 lg:grid-cols-2">
@@ -183,9 +183,21 @@ function SubmitScreen({
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">
                 Swipe · Tap to select
               </p>
-              <p className="hidden text-xs uppercase tracking-[0.18em] text-slate-400 md:block">
-                Tap cards to select
+            </div>
+            <div className="hidden md:flex mt-3 items-center justify-between rounded-xl border border-indigo-400/30 bg-indigo-950/40 px-4 py-2.5">
+              <p className="text-sm font-medium text-indigo-200">
+                {selected.length === blanks
+                  ? 'Ready to submit!'
+                  : `${blanks - selected.length} more card${blanks - selected.length === 1 ? '' : 's'} needed`}
               </p>
+              <button
+                type="button"
+                disabled={selected.length !== blanks || !conn}
+                className="rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => { void submitSelection(); }}
+              >
+                Submit
+              </button>
             </div>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2 md:grid md:overflow-visible md:pb-0 md:gap-2.5 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
               {sortedHand.map(card => {
@@ -218,7 +230,7 @@ function SubmitScreen({
       </div>
 
       {!isCzar && !hasSubmitted && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-slate-700/80 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+        <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex items-center justify-between gap-4 border-t border-slate-700/80 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
           <p className="text-sm text-slate-300">
             {selected.length === blanks
               ? 'Ready to submit!'

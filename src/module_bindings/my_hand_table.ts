@@ -11,9 +11,10 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  id: __t.u64().primaryKey(),
+  id: __t.u64(),
   gameId: __t.uuid().name("game_id"),
-  order: __t.u32(),
+  player: __t.identity(),
   answerId: __t.uuid().name("answer_id"),
-  drawn: __t.bool(),
+  slot: __t.u16(),
+  dealtAt: __t.timestamp().name("dealt_at"),
 });

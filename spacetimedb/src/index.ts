@@ -1,4 +1,12 @@
-import spacetimedb from "./schema";
+import spacetimedb, {
+  hand_cards,
+  game_players,
+  game_packs,
+  rounds,
+  submissions,
+  submission_cards,
+  scores,
+} from "./schema";
 export { default } from "./schema";
 import { t, SenderError } from "spacetimedb/server";
 
@@ -719,6 +727,62 @@ export const next_round = spacetimedb.reducer(
       czar: nextCzar.player,
       deadline: ctx.timestamp,
     });
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Views
+// ---------------------------------------------------------------------------
+
+export const my_hand = spacetimedb.view(
+  { name: "my_hand", public: true },
+  t.array(hand_cards.rowType),
+  (ctx) => [...(ctx.db as any).hand_cards.hand_by_player.filter(ctx.sender)]
+);
+
+
+// ---------------------------------------------------------------------------
+// Host utility reducers
+// ---------------------------------------------------------------------------
+
+export const return_to_lobby = spacetimedb.reducer(
+  { game_id: t.uuid() },
+  (ctx, { game_id }) => {
+    const db = ctx.db as any;
+    const game = db.games.game_id.find(game_id);
+    if (!game) throw new SenderError("game not found");
+    if (game.owner.toHexString() !== ctx.sender.toHexString())
+      throw new SenderError("only the owner can return to lobby");
+
+    // Clear hands
+    const handRows = [...db.hand_cards.hand_by_game.filter(game_id)];
+    for (const row of handRows) db.hand_cards.id.delete(row.id);
+
+    // Clear decks
+    const promptDeckRows = [...db.game_prompt_deck.promptdeck_by_game.filter(game_id)];
+    for (const row of promptDeckRows) db.game_prompt_deck.id.delete(row.id);
+
+    const answerDeckRows = [...db.game_answer_deck.answerdeck_by_game.filter(game_id)];
+    for (const row of answerDeckRows) db.game_answer_deck.id.delete(row.id);
+
+    // Clear rounds
+    const roundRows = [...db.rounds.rounds_by_game.filter(game_id)];
+    for (const row of roundRows) db.rounds.id.delete(row.id);
+
+    // Clear submissions and their cards
+    const submissionRows = [...db.submissions.subs_by_game.filter(game_id)];
+    for (const sub of submissionRows) {
+      const subCards = [...db.submission_cards.subcards_by_submission.filter(sub.submission_id)];
+      for (const card of subCards) db.submission_cards.id.delete(card.id);
+      db.submissions.submission_id.delete(sub.submission_id);
+    }
+
+    // Reset scores to 0 (keep rows, keep players)
+    const scoreRows = [...db.scores.scores_by_game.filter(game_id)];
+    for (const row of scoreRows) db.scores.id.update({ ...row, points: 0 });
+
+    // Reset game to Lobby
+    db.games.game_id.update({ ...game, phase: "Lobby", round_no: 0, czar: game.owner });
   }
 );
 

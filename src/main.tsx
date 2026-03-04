@@ -36,6 +36,8 @@ export type CardData = {
 function RootApp() {
   const [cardData, setCardData] = useState<CardData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isDisconnected, setIsDisconnected] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,15 +80,20 @@ function RootApp() {
         .withToken(localStorage.getItem(TOKEN_KEY) || undefined)
         .onConnect((conn: DbConnection, identity: Identity, token: string) => {
           localStorage.setItem(TOKEN_KEY, token);
+          setIsDisconnected(false);
+          setIsReady(false);
           conn
             .subscriptionBuilder()
             .onApplied(() => {
+              setIsReady(true);
               console.log('Subscribed to all tables');
             })
             .subscribeToAllTables();
           console.log('Connected to SpacetimeDB with identity:', identity.toHexString());
         })
         .onDisconnect(() => {
+          setIsDisconnected(true);
+          setIsReady(false);
           console.log('Disconnected from SpacetimeDB');
         })
         .onConnectError((_ctx: ErrorContext, err: Error) => {
@@ -116,6 +123,28 @@ function RootApp() {
   return (
     <SpacetimeDBProvider connectionBuilder={connectionBuilder}>
       <App cardData={cardData} />
+      {!isReady && !isDisconnected && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950">
+          <div className="rounded-xl border border-slate-700 bg-slate-900/80 px-6 py-4 text-slate-200">
+            Connecting...
+          </div>
+        </div>
+      )}
+      {isDisconnected && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/75 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-red-700/60 bg-slate-900/95 p-8 text-center">
+            <p className="text-xl font-semibold text-red-300">Connection Lost</p>
+            <p className="mt-2 text-sm text-slate-400">Lost connection to the game server.</p>
+            <button
+              type="button"
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-3 font-semibold text-white"
+              onClick={() => window.location.reload()}
+            >
+              Reconnect
+            </button>
+          </div>
+        </div>
+      )}
     </SpacetimeDBProvider>
   );
 }

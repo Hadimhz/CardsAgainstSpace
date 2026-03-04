@@ -57,11 +57,11 @@ const games = table(
   }
 );
 
-const game_players = table(
+export const game_players = table(
   {
     public: true,
     indexes: [
-      { accessor: "players_by_game", algorithm: "btree", columns: ["game_id"] },
+      { accessor: "players_by_game",     algorithm: "btree", columns: ["game_id"] },
       { accessor: "players_by_identity", algorithm: "btree", columns: ["player"] },
     ],
   },
@@ -75,7 +75,7 @@ const game_players = table(
   }
 );
 
-const game_packs = table(
+export const game_packs = table(
   {
     public: true,
     indexes: [
@@ -91,9 +91,9 @@ const game_packs = table(
   }
 );
 
+// Private — server-side only (deck state, not displayed to clients)
 const game_prompt_deck = table(
   {
-    public: true,
     indexes: [{ accessor: "promptdeck_by_game", algorithm: "btree", columns: ["game_id"] }],
   },
   {
@@ -105,9 +105,9 @@ const game_prompt_deck = table(
   }
 );
 
+// Private — server-side only (deck state, not displayed to clients)
 const game_answer_deck = table(
   {
-    public: true,
     indexes: [{ accessor: "answerdeck_by_game", algorithm: "btree", columns: ["game_id"] }],
   },
   {
@@ -119,11 +119,11 @@ const game_answer_deck = table(
   }
 );
 
-const hand_cards = table(
+export const hand_cards = table(
   {
-    public: true,
     indexes: [
-      { accessor: "hand_by_game", algorithm: "btree", columns: ["game_id"] },
+      { accessor: "hand_by_game",   algorithm: "btree", columns: ["game_id"] },
+      { accessor: "hand_by_player", algorithm: "btree", columns: ["player"] },
     ],
   },
   {
@@ -136,7 +136,7 @@ const hand_cards = table(
   }
 );
 
-const rounds = table(
+export const rounds = table(
   {
     public: true,
     indexes: [{ accessor: "rounds_by_game", algorithm: "btree", columns: ["game_id"] }],
@@ -151,7 +151,7 @@ const rounds = table(
   }
 );
 
-const submissions = table(
+export const submissions = table(
   {
     public: true,
     indexes: [
@@ -169,7 +169,7 @@ const submissions = table(
   }
 );
 
-const submission_cards = table(
+export const submission_cards = table(
   {
     public: true,
     indexes: [{ accessor: "subcards_by_submission", algorithm: "btree", columns: ["submission_id"] }],
@@ -182,7 +182,7 @@ const submission_cards = table(
   }
 );
 
-const scores = table(
+export const scores = table(
   {
     public: true,
     indexes: [{ accessor: "scores_by_game", algorithm: "btree", columns: ["game_id"] }],

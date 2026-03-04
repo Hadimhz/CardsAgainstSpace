@@ -11,6 +11,7 @@ function JoinGameModal({ conn, onClose }: JoinGameModalProps) {
   const [gameCode, setGameCode] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('game') ?? '';
@@ -20,6 +21,8 @@ function JoinGameModal({ conn, onClose }: JoinGameModalProps) {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!conn) return;
+    setIsJoining(true);
+    setError(null);
 
     try {
       const gameId = Uuid.parse(gameCode.trim());
@@ -27,11 +30,11 @@ function JoinGameModal({ conn, onClose }: JoinGameModalProps) {
         gameId,
         displayName: displayName.trim(),
       });
-
       window.history.replaceState({}, '', window.location.pathname);
-      onClose();
+      // Don't close — App.tsx will unmount this modal once myGame is defined via subscription
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join game');
+      setIsJoining(false);
     }
   };
 
@@ -75,10 +78,10 @@ function JoinGameModal({ conn, onClose }: JoinGameModalProps) {
           </button>
           <button
             type="submit"
-            disabled={!conn || !displayName.trim() || !gameCode.trim()}
+            disabled={!conn || !displayName.trim() || !gameCode.trim() || isJoining}
             className="rounded-lg bg-indigo-500 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Join Game
+            {isJoining ? 'Joining...' : 'Join Game'}
           </button>
         </div>
       </form>

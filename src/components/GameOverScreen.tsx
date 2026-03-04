@@ -9,9 +9,11 @@ type GameOverScreenProps = {
   scores: readonly Scores[];
   myIdentity: Identity;
   conn: DbConnection | null;
+  isOwner: boolean;
+  onBackToLobby: () => void;
 };
 
-function GameOverScreen({ game, gamePlayers, scores, myIdentity, conn }: GameOverScreenProps) {
+function GameOverScreen({ game, gamePlayers, scores, myIdentity, conn, isOwner, onBackToLobby }: GameOverScreenProps) {
   const leaderboard = useMemo(() => {
     return gamePlayers
       .map(player => {
@@ -64,7 +66,17 @@ function GameOverScreen({ game, gamePlayers, scores, myIdentity, conn }: GameOve
           ))}
         </ul>
 
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex justify-center gap-3">
+          {isOwner && (
+            <button
+              type="button"
+              className="rounded-xl border border-blue-600 bg-blue-900/60 px-6 py-3 font-semibold text-blue-100 hover:bg-blue-800/70 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={onBackToLobby}
+              disabled={!conn}
+            >
+              Back to Lobby
+            </button>
+          )}
           <button
             type="button"
             className="rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"

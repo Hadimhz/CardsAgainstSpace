@@ -24,7 +24,7 @@ function App({ cardData }: AppProps) {
 
   const [games] = useTable(tables.games);
   const [gamePlayers] = useTable(tables.game_players);
-  const [handCards] = useTable(tables.hand_cards);
+  const [handCards] = useTable(tables.my_hand);
   const [submissions] = useTable(tables.submissions);
   const [submissionCards] = useTable(tables.submission_cards);
   const [rounds] = useTable(tables.rounds);
@@ -115,14 +115,10 @@ function App({ cardData }: AppProps) {
   }, [promptCard, packMap]);
 
   const myHand = useMemo(() => {
-    if (!myGame || !myIdentity) return [];
+    if (!myGame) return [];
 
     return handCards
-      .filter(
-        row =>
-          row.gameId.toString() === myGame.gameId.toString() &&
-          row.player.toHexString() === myIdentity.toHexString()
-      )
+      .filter(row => row.gameId.toString() === myGame.gameId.toString())
       .sort((a, b) => a.slot - b.slot)
       .map(row => {
         const answer = answerCardMap.get(row.answerId.toString());
@@ -134,7 +130,7 @@ function App({ cardData }: AppProps) {
           packName,
         };
       });
-  }, [myGame, myIdentity, handCards, answerCardMap, packMap, cardData.white]);
+  }, [myGame, handCards, answerCardMap, packMap, cardData.white]);
 
   const nonCzarCount = useMemo(() => {
     if (!myGame) return 0;
@@ -175,6 +171,13 @@ function App({ cardData }: AppProps) {
     await conn.reducers.leaveGame({ gameId: myGame.gameId });
   };
 
+  const backToLobby = async () => {
+    if (!conn) return;
+    const confirmed = window.confirm('Reset the game back to Lobby? Scores will be cleared.');
+    if (!confirmed) return;
+    await conn.reducers.returnToLobby({ gameId: myGame.gameId });
+  };
+
   const renderWithHostCancel = (content: ReactNode) => {
     const showHostCancel = isOwner && myGame.phase !== 'Lobby' && myGame.phase !== 'GameOver';
     if (!showHostCancel) return content;
@@ -182,15 +185,22 @@ function App({ cardData }: AppProps) {
     return (
       <>
         {content}
-        <button
-          type="button"
-          className="fixed right-4 top-4 z-50 rounded-lg border border-red-700 bg-red-950/70 px-3 py-2 text-sm font-semibold text-red-200 shadow-xl backdrop-blur hover:bg-red-900/80"
-          onClick={() => {
-            void cancelGame();
-          }}
-        >
-          Cancel Game
-        </button>
+        <div className="fixed right-4 top-4 z-50 flex gap-2">
+          <button
+            type="button"
+            className="rounded-lg border border-blue-700 bg-blue-950/70 px-3 py-2 text-sm font-semibold text-blue-200 shadow-xl backdrop-blur hover:bg-blue-900/80"
+            onClick={() => { void backToLobby(); }}
+          >
+            Back to Lobby
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-red-700 bg-red-950/70 px-3 py-2 text-sm font-semibold text-red-200 shadow-xl backdrop-blur hover:bg-red-900/80"
+            onClick={() => { void cancelGame(); }}
+          >
+            Cancel Game
+          </button>
+        </div>
       </>
     );
   };
@@ -280,6 +290,8 @@ function App({ cardData }: AppProps) {
         scores={scores}
         myIdentity={myIdentity}
         conn={conn}
+        isOwner={isOwner}
+        onBackToLobby={backToLobby}
       />
     );
   }
