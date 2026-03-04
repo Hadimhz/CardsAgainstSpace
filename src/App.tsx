@@ -233,6 +233,8 @@ function App({ cardData }: AppProps) {
         nonCzarCount={nonCzarCount}
         gamePlayers={playersInGame}
         scores={scores}
+        submissions={roundSubmissions}
+        isOwner={isOwner}
         conn={conn}
       />
     );
@@ -252,6 +254,7 @@ function App({ cardData }: AppProps) {
         answerCards={answerCards}
         gamePlayers={playersInGame}
         scores={scores}
+        isOwner={isOwner}
         conn={conn}
       />
     );
@@ -274,6 +277,7 @@ function App({ cardData }: AppProps) {
         answerCards={answerCards}
         gamePlayers={playersInGame}
         scores={scores}
+        isOwner={isOwner}
         conn={conn}
         showNames
         canAdvance={canAdvance}

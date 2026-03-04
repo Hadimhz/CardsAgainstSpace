@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Identity, Uuid } from 'spacetimedb';
 import { DbConnection } from '../module_bindings';
-import { GamePlayers, Games, Scores } from '../module_bindings/types';
+import { GamePlayers, Games, Scores, Submissions } from '../module_bindings/types';
 
 type HandCardView = {
   answerId: Uuid;
@@ -21,6 +21,8 @@ type SubmitScreenProps = {
   nonCzarCount: number;
   gamePlayers: readonly GamePlayers[];
   scores: readonly Scores[];
+  submissions: readonly Submissions[];
+  isOwner: boolean;
   conn: DbConnection | null;
 };
 
@@ -46,6 +48,8 @@ function SubmitScreen({
   nonCzarCount,
   gamePlayers,
   scores,
+  submissions,
+  isOwner,
   conn,
 }: SubmitScreenProps) {
   const [selected, setSelected] = useState<string[]>([]);
@@ -64,6 +68,12 @@ function SubmitScreen({
     }
     return map;
   }, [scores, game.gameId]);
+
+  const submittedSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of submissions) set.add(s.player.toHexString());
+    return set;
+  }, [submissions]);
 
   const scoreboard = useMemo(() => {
     return gamePlayers
@@ -129,10 +139,11 @@ function SubmitScreen({
                   Round {game.roundNo}
                 </span>
               </div>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
                 {scoreboard.map((entry, idx) => {
                   const isMe = entry.player.player.toHexString() === myIdentity.toHexString();
                   const isCzarPlayer = entry.player.player.toHexString() === game.czar.toHexString();
+                  const hasSubmitted = submittedSet.has(entry.player.player.toHexString());
                   return (
                     <li
                       key={entry.player.id.toString()}
@@ -142,12 +153,30 @@ function SubmitScreen({
                           : 'border-slate-700 bg-slate-900/70 text-slate-200'
                       }`}
                     >
-                      <span className="truncate pr-2">
-                        {entry.player.displayName}
-                        {isMe ? ' (You)' : ''}
-                        {isCzarPlayer ? ' - Czar' : ''}
-                      </span>
-                      <strong>{entry.points}</strong>
+                      <div className="flex min-w-0 items-center gap-2">
+                        {isOwner && (
+                          <span className={`h-2 w-2 flex-none rounded-full ${
+                            isCzarPlayer ? 'bg-indigo-400' : hasSubmitted ? 'bg-emerald-400' : 'bg-amber-400'
+                          }`} />
+                        )}
+                        <span className="truncate">
+                          {entry.player.displayName}
+                          {isMe ? ' (You)' : ''}
+                          {isCzarPlayer ? ' - Czar' : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <strong>{entry.points}</strong>
+                        {isOwner && !isMe && (
+                          <button
+                            type="button"
+                            className="rounded border border-red-700/60 bg-red-950/40 px-1.5 py-0.5 text-xs text-red-300 hover:bg-red-900/50"
+                            onClick={() => { void conn?.reducers.kickPlayer({ gameId: game.gameId, player: entry.player.player }); }}
+                          >
+                            Kick
+                          </button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
@@ -228,6 +257,18 @@ function SubmitScreen({
           </section>
         )}
       </div>
+
+      {!isOwner && (
+        <div className="fixed right-4 top-4 z-50">
+          <button
+            type="button"
+            className="rounded-lg border border-red-700/60 bg-red-950/60 px-3 py-2 text-sm font-medium text-red-200 shadow-xl backdrop-blur hover:bg-red-900/70"
+            onClick={() => { void conn?.reducers.leaveGame({ gameId: game.gameId }); }}
+          >
+            Leave Game
+          </button>
+        </div>
+      )}
 
       {!isCzar && !hasSubmitted && (
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex items-center justify-between gap-4 border-t border-slate-700/80 bg-slate-950/95 px-4 py-3 backdrop-blur-md">

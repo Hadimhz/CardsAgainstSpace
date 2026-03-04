@@ -45,11 +45,13 @@ import ForceRevealReducer from "./force_reveal_reducer";
 import ImportAllPacksReducer from "./import_all_packs_reducer";
 import ImportPackReducer from "./import_pack_reducer";
 import JoinGameReducer from "./join_game_reducer";
+import KickPlayerReducer from "./kick_player_reducer";
 import LeaveGameReducer from "./leave_game_reducer";
 import NextRoundReducer from "./next_round_reducer";
 import PickWinnerReducer from "./pick_winner_reducer";
 import RemovePackFromGameReducer from "./remove_pack_from_game_reducer";
 import ReturnToLobbyReducer from "./return_to_lobby_reducer";
+import SetMaxRoundsReducer from "./set_max_rounds_reducer";
 import StartGameReducer from "./start_game_reducer";
 import SubmitCardsReducer from "./submit_cards_reducer";
 import SyncPromptBlanksReducer from "./sync_prompt_blanks_reducer";
@@ -241,11 +243,13 @@ const reducersSchema = __reducers(
   __reducerSchema("import_all_packs", ImportAllPacksReducer),
   __reducerSchema("import_pack", ImportPackReducer),
   __reducerSchema("join_game", JoinGameReducer),
+  __reducerSchema("kick_player", KickPlayerReducer),
   __reducerSchema("leave_game", LeaveGameReducer),
   __reducerSchema("next_round", NextRoundReducer),
   __reducerSchema("pick_winner", PickWinnerReducer),
   __reducerSchema("remove_pack_from_game", RemovePackFromGameReducer),
   __reducerSchema("return_to_lobby", ReturnToLobbyReducer),
+  __reducerSchema("set_max_rounds", SetMaxRoundsReducer),
   __reducerSchema("start_game", StartGameReducer),
   __reducerSchema("submit_cards", SubmitCardsReducer),
   __reducerSchema("sync_prompt_blanks", SyncPromptBlanksReducer),

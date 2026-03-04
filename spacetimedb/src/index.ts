@@ -453,6 +453,50 @@ export const remove_pack_from_game = spacetimedb.reducer(
   }
 );
 
+export const kick_player = spacetimedb.reducer(
+  { game_id: t.uuid(), player: t.identity() },
+  (ctx, { game_id, player }) => {
+    const db = ctx.db as any;
+    const game = db.games.game_id.find(game_id);
+    if (!game) throw new SenderError("game not found");
+    if (game.owner.toHexString() !== ctx.sender.toHexString())
+      throw new SenderError("only the owner can kick players");
+    if (game.phase === "GameOver") throw new SenderError("game is already over");
+    if (player.toHexString() === ctx.sender.toHexString())
+      throw new SenderError("cannot kick yourself");
+
+    const playerRow = [...db.game_players.players_by_game.filter(game_id)].find(
+      (r: any) => r.player.toHexString() === player.toHexString()
+    );
+    if (!playerRow) throw new SenderError("player not in this game");
+    db.game_players.id.delete(playerRow.id);
+
+    // Remove their hand cards
+    const handRows = [...db.hand_cards.hand_by_game.filter(game_id)].filter(
+      (r: any) => r.player.toHexString() === player.toHexString()
+    );
+    for (const row of handRows) db.hand_cards.id.delete(row.id);
+
+    const scoreRow = [...db.scores.scores_by_game.filter(game_id)].find(
+      (r: any) => r.player.toHexString() === player.toHexString()
+    );
+    if (scoreRow) db.scores.id.delete(scoreRow.id);
+  }
+);
+
+export const set_max_rounds = spacetimedb.reducer(
+  { game_id: t.uuid(), max_rounds: t.u16() },
+  (ctx, { game_id, max_rounds }) => {
+    const db = ctx.db as any;
+    const game = db.games.game_id.find(game_id);
+    if (!game) throw new SenderError("game not found");
+    if (game.owner.toHexString() !== ctx.sender.toHexString())
+      throw new SenderError("only the owner can change settings");
+    if (game.phase !== "Lobby") throw new SenderError("game is not in Lobby phase");
+    db.games.game_id.update({ ...game, max_rounds });
+  }
+);
+
 export const start_game = spacetimedb.reducer(
   { game_id: t.uuid() },
   (ctx, { game_id }) => {

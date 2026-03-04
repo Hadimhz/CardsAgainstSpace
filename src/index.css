@@ -107,6 +107,12 @@ body {
   min-height: 9.1rem;
 }
 
+.cah-card-hand {
+  padding: 0.5rem 0.6rem;
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
 .cah-card-sm {
   min-height: 8.6rem;
 }

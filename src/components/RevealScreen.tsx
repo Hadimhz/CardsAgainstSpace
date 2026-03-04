@@ -22,6 +22,7 @@ type RevealScreenProps = {
   answerCards: readonly AnswerCards[];
   gamePlayers: readonly GamePlayers[];
   scores: readonly Scores[];
+  isOwner: boolean;
   conn: DbConnection | null;
   // round-end mode
   showNames?: boolean;
@@ -41,6 +42,7 @@ function RevealScreen({
   answerCards,
   gamePlayers,
   scores,
+  isOwner,
   conn,
   showNames = false,
   canAdvance = false,
@@ -127,6 +129,17 @@ function RevealScreen({
 
   return (
     <main className="min-h-screen px-4 py-6">
+      {!isOwner && (
+        <div className="fixed right-4 top-4 z-50">
+          <button
+            type="button"
+            className="rounded-lg border border-red-700/60 bg-red-950/60 px-3 py-2 text-sm font-medium text-red-200 shadow-xl backdrop-blur hover:bg-red-900/70"
+            onClick={() => { void conn?.reducers.leaveGame({ gameId: game.gameId }); }}
+          >
+            Leave Game
+          </button>
+        </div>
+      )}
       <div className="mx-auto w-full max-w-6xl space-y-5">
         <section className="game-surface rounded-3xl p-6">
           <div className="grid gap-4 lg:grid-cols-2">
@@ -175,7 +188,7 @@ function RevealScreen({
                   Round {game.roundNo}
                 </span>
               </div>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
                 {scoreboard.map((entry, idx) => {
                   const isMe = entry.player.player.toHexString() === myIdentity.toHexString();
                   const isCzarPlayer = entry.player.player.toHexString() === game.czar.toHexString();
@@ -193,7 +206,18 @@ function RevealScreen({
                         {isMe ? ' (You)' : ''}
                         {isCzarPlayer ? ' - Czar' : ''}
                       </span>
-                      <strong>{entry.points}</strong>
+                      <div className="flex items-center gap-2">
+                        <strong>{entry.points}</strong>
+                        {isOwner && !isMe && (
+                          <button
+                            type="button"
+                            className="rounded border border-red-700/60 bg-red-950/40 px-1.5 py-0.5 text-xs text-red-300 hover:bg-red-900/50"
+                            onClick={() => { void conn?.reducers.kickPlayer({ gameId: game.gameId, player: entry.player.player }); }}
+                          >
+                            Kick
+                          </button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
@@ -238,7 +262,7 @@ function RevealScreen({
                 {entry.cards.map((card, i) => (
                   <article
                     key={`${entry.submissionId.toString()}-${i}`}
-                    className={`cah-card cah-white-card cah-white-card-compact cah-card-sm ${
+                    className={`cah-card cah-white-card cah-white-card-compact cah-card-sm cah-card-hand ${
                       entry.isWinner && isRoundEnd ? 'cah-glow-gold' : ''
                     }`}
                   >
